@@ -10,12 +10,6 @@ const nextConfig: NextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  output: 'standalone',
-  outputFileTracingRoot: __dirname,
-  turbopack: {
-    root: __dirname,
-  },
-
   images: {
     remotePatterns: [
       // Douban images
