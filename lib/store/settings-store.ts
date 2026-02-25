@@ -177,8 +177,15 @@ export const settingsStore = {
       });
 
       // Filter out invalid sources (missing baseUrl etc)
-      const validSources = (Array.isArray(parsed.sources) ? parsed.sources : getDefaultSources())
+      let validSources = (Array.isArray(parsed.sources) ? parsed.sources : getDefaultSources())
         .filter((s: any) => s && s.id && s.name && s.baseUrl);
+
+      // Auto-merge any new default sources that don't exist in user's saved sources
+      const existingIds = new Set(validSources.map((s: any) => s.id));
+      const newDefaults = getDefaultSources().filter(ds => !existingIds.has(ds.id));
+      if (newDefaults.length > 0) {
+        validSources = [...validSources, ...newDefaults];
+      }
 
       const validPremiumSources = (Array.isArray(parsed.premiumSources) ? parsed.premiumSources : getDefaultPremiumSources())
         .filter((s: any) => s && s.id && s.name && s.baseUrl);

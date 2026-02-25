@@ -50,12 +50,17 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                                     alt={siteConfig.name}
                                     width={40}
                                     height={40}
-                                    className="object-contain"
+                                    className="object-contain rounded-lg"
                                 />
                             </div>
                             <div className="flex flex-col min-w-0">
-                                <h1 className="text-lg sm:text-2xl font-bold text-[var(--text-color)] truncate">{siteConfig.name}</h1>
-                                <p className="text-xs text-[var(--text-color-secondary)] hidden sm:block truncate">{siteConfig.description}</p>
+                                <h1 className="text-lg sm:text-2xl font-bold truncate" style={{
+                                    background: 'linear-gradient(135deg, #60a5fa, #a78bfa)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    letterSpacing: '0.02em',
+                                }}>theone58</h1>
+                                <p className="text-[10px] sm:text-xs text-[var(--text-color-secondary)] hidden sm:block truncate opacity-60">{siteConfig.description}</p>
                             </div>
                         </Link>
 

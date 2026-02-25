@@ -2,10 +2,12 @@
  * PopularFeatures - Main component for popular movies section
  * Displays Douban movie recommendations with tag filtering and infinite scroll.
  * Default tab is "热门" (trending).
+ * Clicking a movie navigates directly to the player page for instant playback.
  */
 
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { TagManager } from './TagManager';
 import { MovieGrid } from './MovieGrid';
 import { useTagManager } from './hooks/useTagManager';
@@ -16,6 +18,7 @@ interface PopularFeaturesProps {
 }
 
 export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
+  const router = useRouter();
   const {
     tags,
     selectedTag,
@@ -44,9 +47,10 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
   } = usePopularMovies(selectedTag, tags, contentType);
 
   const handleMovieClick = (movie: any) => {
-    if (onSearch) {
-      onSearch(movie.title);
-    }
+    // 直达播放：导航到播放页，自动搜索最佳源并播放
+    const params = new URLSearchParams();
+    params.set('title', movie.title);
+    router.push(`/player?${params.toString()}`);
   };
 
   const handleTagSelect = (tagId: string) => {

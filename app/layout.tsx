@@ -64,11 +64,57 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.theone58.com';
+
 export const metadata: Metadata = {
-  title: siteConfig.title,
-  description: siteConfig.description,
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台，支持全网影视资源一键搜索',
+  keywords: ['theone58', '视频聚合', '在线观影', '免费电影', '电视剧', '综艺', '动漫', '多源搜索', '影视平台', '海量片源'],
+  authors: [{ name: 'theone58' }],
+  creator: 'theone58',
   icons: {
     icon: '/icon.png',
+    apple: '/icon.png',
+  },
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    url: SITE_URL,
+    title: siteConfig.title,
+    description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台',
+    siteName: siteConfig.name,
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'theone58 - 海量片源 · 极速聚合',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: siteConfig.title,
+    description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
 };
 
@@ -85,12 +131,33 @@ export default function RootLayout({
         {/* Apple PWA Support */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="KVideo" />
+        <meta name="apple-mobile-web-app-title" content="theone58" />
         <link rel="apple-touch-icon" href="/icon.png" />
         {/* Theme Color (for browser address bar) */}
         <meta name="theme-color" content="#000000" />
         {/* Mobile viewport */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* JSON-LD 结构化数据 */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'theone58',
+              url: 'https://www.theone58.com',
+              description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: 'https://www.theone58.com/?q={search_term_string}',
+                },
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

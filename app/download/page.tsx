@@ -85,7 +85,7 @@ export default function DownloadPage() {
                     WebkitTextFillColor: 'transparent',
                     marginBottom: 16,
                 }}>
-                    KVideo
+                    theone58
                 </div>
                 <p style={{
                     fontSize: 18,
@@ -223,7 +223,7 @@ export default function DownloadPage() {
                     🌐 也可以直接在浏览器中使用
                 </p>
                 <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>
-                    KVideo 是渐进式 Web 应用（PWA），无需下载，
+                    theone58 是渐进式 Web 应用（PWA），无需下载，
                     <a href="/" style={{ color: '#667eea', textDecoration: 'none' }}>
                         打开网页版 →
                     </a>
@@ -236,7 +236,7 @@ export default function DownloadPage() {
                 color: 'rgba(255,255,255,0.3)',
                 fontSize: 13,
             }}>
-                © 2026 KVideo · 多源聚合视频平台
+                © 2026 theone58 · 多源聚合视频平台
             </footer>
         </div>
     );

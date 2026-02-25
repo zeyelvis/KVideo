@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
                 type: 'videos',
                 videos: videos.map((video: any) => ({
                   ...video,
-                  sourceDisplayName: getSourceName(source.id),
+                  sourceDisplayName: source.name || getSourceName(source.id),
                   latency,
                 })),
                 source: source.id,
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
                       type: 'videos',
                       videos: pageVideos.map((video: any) => ({
                         ...video,
-                        sourceDisplayName: getSourceName(source.id),
+                        sourceDisplayName: source.name || getSourceName(source.id),
                         latency,
                       })),
                       source: source.id,

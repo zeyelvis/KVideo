@@ -31,6 +31,120 @@ function PlayerContent() {
   const episodeParam = searchParams.get('episode');
   const groupedSourcesParam = searchParams.get('groupedSources');
 
+  // === Title-only mode: auto-search all sources and redirect to best match ===
+  // Initial state: if we have title but no id/source, we're already in search mode
+  const [titleSearching, setTitleSearching] = useState(() => !videoId && !source && !!title);
+  const [titleSearchError, setTitleSearchError] = useState('');
+
+  useEffect(() => {
+    // Only trigger when we have a title but no video ID/source
+    if (videoId || source || !title) return;
+
+    let cancelled = false;
+    setTitleSearching(true);
+    setTitleSearchError('');
+
+    const settings = settingsStore.getSettings();
+    const sourcesForMode = isPremium ? settings.premiumSources : settings.sources;
+    const allSources = sourcesForMode?.filter((s: VideoSource) => s.enabled !== false) || [];
+
+    if (allSources.length === 0) {
+      setTitleSearchError('没有可用的视频源');
+      setTitleSearching(false);
+      return;
+    }
+
+    const normalizedTitle = title.toLowerCase().trim();
+    let redirected = false;
+
+    (async () => {
+      try {
+        const response = await fetch('/api/search-parallel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: title, sources: allSources, page: 1 }),
+        });
+
+        if (cancelled) return;
+
+        if (!response.ok || !response.body) {
+          if (!cancelled) {
+            setTitleSearchError('搜索失败，请返回重试');
+            setTitleSearching(false);
+          }
+          return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        const foundSources: SourceInfo[] = [];
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || cancelled) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.type === 'videos' && data.videos && data.videos.length > 0) {
+                // Priority: exact match > partial match > first result
+                const match = data.videos.find((v: any) =>
+                  v.vod_name?.toLowerCase().trim() === normalizedTitle
+                ) || data.videos.find((v: any) =>
+                  v.vod_name?.toLowerCase().trim().includes(normalizedTitle) ||
+                  normalizedTitle.includes(v.vod_name?.toLowerCase().trim())
+                ) || data.videos[0]; // 兜底：直接用第一个搜索结果
+
+                if (match && !cancelled) {
+                  foundSources.push({
+                    id: match.vod_id,
+                    source: match.source,
+                    sourceName: match.sourceDisplayName || getSourceName(match.source),
+                    latency: match.latency,
+                    pic: match.vod_pic,
+                    typeName: match.type_name,
+                  });
+
+                  // Redirect to the first match immediately for fast playback
+                  if (!redirected) {
+                    redirected = true;
+                    const params = new URLSearchParams();
+                    params.set('id', String(match.vod_id));
+                    params.set('source', match.source);
+                    params.set('title', title);
+                    if (isPremium) params.set('premium', '1');
+                    if (foundSources.length > 0) {
+                      params.set('groupedSources', JSON.stringify(foundSources));
+                    }
+                    router.replace(`/player?${params.toString()}`, { scroll: false });
+                  }
+                }
+              }
+            } catch { /* ignore parse errors */ }
+          }
+        }
+
+        // After all sources responded
+        if (!redirected && !cancelled) {
+          setTitleSearchError('未找到匹配的视频，请尝试搜索其他关键词');
+          setTitleSearching(false);
+        }
+      } catch (err: any) {
+        if (!cancelled && err?.name !== 'AbortError') {
+          setTitleSearchError('搜索出错，请返回重试');
+          setTitleSearching(false);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [videoId, source, title, isPremium, router]);
+
   // Track settings - use mode-specific store
   const modeStore = isPremium ? premiumModeSettingsStore : settingsStore;
   const [isReversed, setIsReversed] = useState(() =>
@@ -40,21 +154,17 @@ function PlayerContent() {
   // Mobile tab state
   const [activeTab, setActiveTab] = useState<'episodes' | 'info'>('episodes');
 
-  // Sync with store changes if any (though usually it's one-way from UI to store)
+  // Sync with store changes
   useEffect(() => {
     setIsReversed(modeStore.getSettings().episodeReverseOrder);
   }, []);
-
-  // Redirect if no video ID or source
-  if (!videoId || !source) {
-    router.push('/');
-    return null;
-  }
 
   // Handle auto-fallback when current source is unavailable (defined later, uses ref)
   const sourceUnavailableRef = useRef<(() => void) | undefined>(undefined);
   const pendingFallbackRef = useRef(false);
 
+  // useVideoPlayer must be called unconditionally (React hooks rules)
+  // When videoId/source are null (title-only mode), pass empty strings - the hook will just be idle
   const {
     videoData,
     loading,
@@ -65,12 +175,15 @@ function PlayerContent() {
     setPlayUrl,
     setVideoError,
     fetchVideoDetails,
-  } = useVideoPlayer(videoId, source, episodeParam, isReversed, useCallback(() => {
+  } = useVideoPlayer(videoId || '', source || '', episodeParam, isReversed, useCallback(() => {
     sourceUnavailableRef.current?.();
   }, []));
 
   // Parse grouped sources if available
   const [discoveredSources, setDiscoveredSources] = useState<SourceInfo[]>([]);
+
+  // Title-only mode guard: redirect if no title, id, or source
+  const isTitleOnlyMode = !videoId || !source;
 
   const groupedSources = useMemo<SourceInfo[]>(() => {
     let sources: SourceInfo[] = [];
@@ -144,21 +257,20 @@ function PlayerContent() {
   }, [discoveredSources]);
 
   // Background fetch alternative sources when none provided or when existing ones lack full info
-  const fetchedSourcesRef = useRef(false);
   useEffect(() => {
-    if (fetchedSourcesRef.current || !title) return;
+    if (!title || isTitleOnlyMode) return;
 
     // Check if existing grouped sources already have full info (pic + latency)
     let existingSources: SourceInfo[] = [];
     if (groupedSourcesParam) {
-      try { existingSources = JSON.parse(groupedSourcesParam); } catch {}
+      try { existingSources = JSON.parse(groupedSourcesParam); } catch { }
     }
     // Always fetch alternatives if there's a pending fallback (source unavailable)
     const hasFullInfo = !pendingFallbackRef.current && existingSources.length > 1 &&
       existingSources.every(s => s.pic || s.latency !== undefined);
     if (hasFullInfo) return;
 
-    fetchedSourcesRef.current = true;
+    let cancelled = false;
 
     const settings = settingsStore.getSettings();
     const sourcesForMode = isPremium ? settings.premiumSources : settings.sources;
@@ -167,17 +279,14 @@ function PlayerContent() {
     const otherSources = allSources.filter((s: VideoSource) => s.id !== source);
     if (otherSources.length === 0) return;
 
-    const controller = new AbortController();
-
     (async () => {
       try {
         const response = await fetch('/api/search-parallel', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: title, sources: otherSources, page: 1 }),
-          signal: controller.signal,
         });
-        if (!response.ok || !response.body) return;
+        if (cancelled || !response.ok || !response.body) return;
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -187,7 +296,7 @@ function PlayerContent() {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done || cancelled) break;
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
           buffer = lines.pop() || '';
@@ -196,12 +305,16 @@ function PlayerContent() {
             if (!line.startsWith('data: ')) continue;
             try {
               const data = JSON.parse(line.slice(6));
-              if (data.type === 'videos' && data.videos) {
-                // Find exact or close title match
+              if (data.type === 'videos' && data.videos && data.videos.length > 0) {
+                // Priority: exact match > partial match > first result
                 const match = data.videos.find((v: any) =>
                   v.vod_name?.toLowerCase().trim() === normalizedTitle
-                );
-                if (match) {
+                ) || data.videos.find((v: any) =>
+                  v.vod_name?.toLowerCase().trim().includes(normalizedTitle) ||
+                  normalizedTitle.includes(v.vod_name?.toLowerCase().trim())
+                ) || data.videos[0]; // 兜底：用搜索结果第一个
+
+                if (match && !cancelled) {
                   found.push({
                     id: match.vod_id,
                     source: match.source,
@@ -222,8 +335,8 @@ function PlayerContent() {
       }
     })();
 
-    return () => controller.abort();
-  }, [title, source, groupedSourcesParam, isPremium]);
+    return () => { cancelled = true; };
+  }, [title, source, groupedSourcesParam, isPremium, isTitleOnlyMode]);
 
   // Track current source for switching
   const [currentSourceId, setCurrentSourceId] = useState(source);
@@ -244,7 +357,7 @@ function PlayerContent() {
         videoData.vod_name || title || '未知视频',
         playUrl,
         currentEpisode,
-        source,
+        source || '',
         0, // Initial playback position
         0, // Will be updated by VideoPlayer
         videoData.vod_pic,
@@ -294,13 +407,35 @@ function PlayerContent() {
     }
   }, [videoData, currentEpisode, isReversed, router, searchParams]); // handleEpisodeClick is not memoized, but uses stable hooks setters. wait, handleEpisodeClick is inline too!
 
+  // Redirect if no params at all
+  if (isTitleOnlyMode && !titleSearching && !titleSearchError && !title) {
+    router.push('/');
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg-color)]">
       {/* Glass Navbar */}
       <PlayerNavbar isPremium={isPremium} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        {loading ? (
+        {isTitleOnlyMode && titleSearching ? (
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent mb-6"></div>
+            <p className="text-lg font-medium text-[var(--text-color)]">正在搜索最佳片源...</p>
+            <p className="text-sm text-[var(--text-color-secondary)] mt-2">{title}</p>
+          </div>
+        ) : isTitleOnlyMode && titleSearchError ? (
+          <PlayerError
+            error={titleSearchError}
+            onBack={() => router.back()}
+            onRetry={() => {
+              setTitleSearchError('');
+              setTitleSearching(true);
+              window.location.reload();
+            }}
+          />
+        ) : loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent mb-4"></div>
             <p className="text-[var(--text-color-secondary)]">正在加载视频详情...</p>
@@ -341,7 +476,7 @@ function PlayerContent() {
                 <div className="flex items-center gap-3 mt-4">
                   <FavoriteButton
                     videoId={videoId}
-                    source={source}
+                    source={source || ''}
                     title={videoData.vod_name || title || '未知视频'}
                     poster={videoData.vod_pic}
                     type={videoData.type_name}
