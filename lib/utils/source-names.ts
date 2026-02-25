@@ -1,5 +1,4 @@
 import { settingsStore } from '@/lib/store/settings-store';
-import { premiumModeSettingsStore } from '@/lib/store/premium-mode-settings';
 
 export function getSourceName(sourceId: string): string {
   // 优先从用户配置的源列表中查找名称
@@ -9,11 +8,6 @@ export function getSourceName(sourceId: string): string {
       const allSources = [...(settings.sources || []), ...(settings.premiumSources || [])];
       const found = allSources.find(s => s.id === sourceId);
       if (found?.name) return found.name;
-
-      // 也查 premium store
-      const premiumSettings = premiumModeSettingsStore.getSettings();
-      const premiumFound = premiumSettings.sources?.find((s: any) => s.id === sourceId);
-      if (premiumFound?.name) return premiumFound.name;
     } catch {
       // 静默回退到硬编码映射
     }
