@@ -115,15 +115,6 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                                     <line x1="12" y1="15" x2="12" y2="3" />
                                 </svg>
                             </Link>
-                            <a
-                                href="https://github.com/KuekHaoYang/KVideo"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer hidden sm:flex"
-                                aria-label="GitHub 仓库"
-                            >
-                                <Icons.Github size={20} />
-                            </a>
                             <Link
                                 href={settingsHref}
                                 className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
@@ -139,6 +130,6 @@ export function Navbar({ onReset, isPremiumMode = false }: NavbarProps) {
                     </div>
                 </div>
             </div>
-        </nav>
+        </nav >
     );
 }

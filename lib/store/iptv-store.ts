@@ -30,7 +30,7 @@ interface IPTVActions {
   setLoading: (loading: boolean) => void;
 }
 
-interface IPTVStore extends IPTVState, IPTVActions {}
+interface IPTVStore extends IPTVState, IPTVActions { }
 
 const MAX_CONCURRENT = 3;
 
@@ -56,7 +56,14 @@ async function fetchWithConcurrencyLimit<T>(
 export const useIPTVStore = create<IPTVStore>()(
   persist(
     (set, get) => ({
-      sources: [],
+      sources: [
+        {
+          id: 'default-chinese-iptv',
+          name: '中国频道 (iptv-org)',
+          url: 'https://iptv-org.github.io/iptv/countries/cn.m3u',
+          addedAt: 0,
+        },
+      ],
       cachedChannels: [],
       cachedGroups: [],
       cachedChannelsBySource: {},
@@ -154,11 +161,39 @@ export const useIPTVStore = create<IPTVStore>()(
     }),
     {
       name: 'kvideo-iptv-store',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        const newDefaultSource = {
+          id: 'default-chinese-iptv',
+          name: '中国频道 (iptv-org)',
+          url: 'https://iptv-org.github.io/iptv/countries/cn.m3u',
+          addedAt: 0,
+        };
+        const sources = persistedState.sources || [];
+
+        if (version < 1) {
+          // v0 → 注入默认源
+          const hasDefault = sources.some((s: any) => s.id === 'default-chinese-iptv');
+          if (!hasDefault) {
+            persistedState.sources = [newDefaultSource, ...sources];
+          }
+        }
+
+        if (version < 2) {
+          // v1 → 替换旧的 chinamobile 源为 iptv-org 源
+          persistedState.sources = (persistedState.sources || []).map((s: any) => {
+            if (s.url?.includes('burningc4.com') || s.url?.includes('chinamobile.com')) {
+              return { ...newDefaultSource };
+            }
+            return s;
+          });
+        }
+
+        return persistedState;
+      },
       partialize: (state) => ({
         sources: state.sources,
         lastRefreshed: state.lastRefreshed,
-        // Don't persist cachedChannels/cachedGroups - they can be very large
-        // and will be re-fetched on page load
       }),
     }
   )

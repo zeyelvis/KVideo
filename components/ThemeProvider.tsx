@@ -31,12 +31,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     const applyTheme = (newTheme?: 'light' | 'dark') => {
-      const themeToApply = newTheme || (theme === 'system' 
+      const themeToApply = newTheme || (theme === 'system'
         ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
         : theme);
-      
+
       setActualTheme(themeToApply);
       document.documentElement.classList.toggle('dark', themeToApply === 'dark');
+      document.body.classList.toggle('dark', themeToApply === 'dark');
     };
 
     const applyThemeWithTransition = () => {
@@ -63,12 +64,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           transitionRef.current = document.startViewTransition(() => {
             applyTheme();
           });
-          
+
           // Clear ref after transition completes or fails
           if (transitionRef.current) {
             transitionRef.current.finished
               .then(() => { transitionRef.current = null; })
-              .catch((error: Error) => { 
+              .catch((error: Error) => {
                 // Silently handle transition errors (visibility changes, etc.)
                 transitionRef.current = null;
               });
@@ -93,7 +94,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         applyThemeWithTransition();
       }
     };
-    
+
     // Listen for visibility changes to abort transitions
     const handleVisibilityChange = () => {
       if (document.hidden && transitionRef.current) {
@@ -105,10 +106,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         transitionRef.current = null;
       }
     };
-    
+
     mediaQuery.addEventListener('change', handleSystemThemeChange);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       mediaQuery.removeEventListener('change', handleSystemThemeChange);
       document.removeEventListener('visibilitychange', handleVisibilityChange);

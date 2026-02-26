@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 type Platform = 'ios' | 'android' | 'macos' | 'windows' | 'tv' | 'unknown';
 
@@ -23,7 +24,7 @@ const platforms = [
         minVersion: 'iOS 15.0+',
         size: '~8 MB',
         action: '下载 IPA',
-        url: '#', // 替换为实际下载链接
+        url: '#',
     },
     {
         id: 'android' as Platform,
@@ -33,7 +34,7 @@ const platforms = [
         minVersion: 'Android 8.0+',
         size: '~5 MB',
         action: '下载 APK',
-        url: '#', // 替换为实际下载链接
+        url: '#',
     },
     {
         id: 'macos' as Platform,
@@ -43,7 +44,7 @@ const platforms = [
         minVersion: 'macOS 13.0+',
         size: '~12 MB',
         action: '下载 DMG',
-        url: '#', // 替换为实际下载链接
+        url: '#',
     },
     {
         id: 'tv' as Platform,
@@ -53,7 +54,7 @@ const platforms = [
         minVersion: 'Android TV 8.0+ / tvOS 16+',
         size: '~6 MB',
         action: '下载 TV 版',
-        url: '#', // 替换为实际下载链接
+        url: '#',
     },
 ];
 
@@ -65,119 +66,58 @@ export default function DownloadPage() {
     }, []);
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d0d2b 100%)',
-            color: '#fff',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            padding: '60px 20px',
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        }}>
+        <div className="min-h-screen bg-[var(--bg-color)] bg-[image:var(--bg-image)] text-[var(--text-color)] flex flex-col items-center px-5 py-15 font-sans">
             {/* 头部 */}
-            <div style={{ textAlign: 'center', marginBottom: 60 }}>
-                <div style={{
-                    fontSize: 48,
-                    fontWeight: 800,
+            <div className="text-center mb-15">
+                <div className="text-5xl font-extrabold mb-4" style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    marginBottom: 16,
                 }}>
                     theone58
                 </div>
-                <p style={{
-                    fontSize: 18,
-                    color: 'rgba(255,255,255,0.6)',
-                    maxWidth: 500,
-                    lineHeight: 1.6,
-                }}>
+                <p className="text-lg text-[var(--text-color-secondary)] max-w-[500px] leading-relaxed">
                     多源聚合视频平台 · 支持全平台
                 </p>
             </div>
 
             {/* 平台卡片网格 */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: 24,
-                maxWidth: 1100,
-                width: '100%',
-            }}>
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6 max-w-[1100px] w-full">
                 {platforms.map((platform) => {
                     const isRecommended = platform.id === currentPlatform;
                     return (
                         <div
                             key={platform.id}
-                            style={{
-                                position: 'relative',
-                                background: isRecommended
-                                    ? 'linear-gradient(135deg, rgba(102,126,234,0.2) 0%, rgba(118,75,162,0.2) 100%)'
-                                    : 'rgba(255,255,255,0.05)',
-                                border: isRecommended
-                                    ? '2px solid rgba(102,126,234,0.5)'
-                                    : '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: 20,
-                                padding: 32,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                textAlign: 'center',
-                                backdropFilter: 'blur(20px)',
-                                transition: 'all 0.3s ease',
-                                cursor: 'pointer',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = 'translateY(-4px)';
-                                e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = 'none';
-                            }}
+                            className={`
+                                relative flex flex-col items-center text-center p-8 rounded-2xl backdrop-blur-xl
+                                transition-all duration-300 cursor-pointer
+                                hover:-translate-y-1 hover:shadow-lg
+                                ${isRecommended
+                                    ? 'bg-[var(--accent-color)]/10 border-2 border-[var(--accent-color)]/40'
+                                    : 'bg-[var(--glass-bg)] border border-[var(--glass-border)]'
+                                }
+                            `}
                         >
                             {isRecommended && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: -12,
-                                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                                    padding: '4px 16px',
-                                    borderRadius: 20,
-                                    fontSize: 12,
-                                    fontWeight: 600,
-                                }}>
+                                <div className="absolute -top-3 px-4 py-1 rounded-full text-xs font-semibold text-white"
+                                    style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>
                                     推荐当前设备
                                 </div>
                             )}
 
-                            <div style={{ fontSize: 48, marginBottom: 16 }}>
+                            <div className="text-5xl mb-4">
                                 {platform.icon}
                             </div>
 
-                            <h3 style={{
-                                fontSize: 22,
-                                fontWeight: 700,
-                                marginBottom: 4,
-                            }}>
+                            <h3 className="text-xl font-bold text-[var(--text-color)] mb-1">
                                 {platform.name}
                             </h3>
 
-                            <p style={{
-                                color: 'rgba(255,255,255,0.5)',
-                                fontSize: 14,
-                                marginBottom: 16,
-                            }}>
+                            <p className="text-[var(--text-color-secondary)] text-sm mb-4">
                                 {platform.description}
                             </p>
 
-                            <div style={{
-                                display: 'flex',
-                                gap: 16,
-                                marginBottom: 20,
-                                fontSize: 13,
-                                color: 'rgba(255,255,255,0.4)',
-                            }}>
+                            <div className="flex gap-4 mb-5 text-xs text-[var(--text-color-secondary)] opacity-70">
                                 <span>{platform.minVersion}</span>
                                 <span>·</span>
                                 <span>{platform.size}</span>
@@ -185,22 +125,15 @@ export default function DownloadPage() {
 
                             <a
                                 href={platform.url}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 8,
-                                    padding: '12px 32px',
-                                    background: isRecommended
-                                        ? 'linear-gradient(135deg, #667eea, #764ba2)'
-                                        : 'rgba(255,255,255,0.1)',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: 12,
-                                    fontSize: 15,
-                                    fontWeight: 600,
-                                    textDecoration: 'none',
-                                    transition: 'all 0.2s ease',
-                                }}
+                                className={`
+                                    inline-flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold
+                                    no-underline transition-all duration-200
+                                    ${isRecommended
+                                        ? 'text-white'
+                                        : 'text-[var(--text-color)] bg-[var(--glass-bg)] border border-[var(--glass-border)]'
+                                    }
+                                `}
+                                style={isRecommended ? { background: 'linear-gradient(135deg, #667eea, #764ba2)' } : {}}
                             >
                                 ⬇️ {platform.action}
                             </a>
@@ -210,32 +143,20 @@ export default function DownloadPage() {
             </div>
 
             {/* Web 提示 */}
-            <div style={{
-                marginTop: 60,
-                padding: '24px 40px',
-                background: 'rgba(255,255,255,0.05)',
-                borderRadius: 16,
-                border: '1px solid rgba(255,255,255,0.1)',
-                textAlign: 'center',
-                backdropFilter: 'blur(10px)',
-            }}>
-                <p style={{ fontSize: 16, marginBottom: 8 }}>
+            <div className="mt-15 px-10 py-6 bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-2xl backdrop-blur-xl text-center">
+                <p className="text-base mb-2">
                     🌐 也可以直接在浏览器中使用
                 </p>
-                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>
+                <p className="text-[var(--text-color-secondary)] text-sm">
                     theone58 是渐进式 Web 应用（PWA），无需下载，
-                    <a href="/" style={{ color: '#667eea', textDecoration: 'none' }}>
+                    <Link href="/" className="text-[var(--accent-color)] no-underline hover:underline">
                         打开网页版 →
-                    </a>
+                    </Link>
                 </p>
             </div>
 
             {/* 底部 */}
-            <footer style={{
-                marginTop: 60,
-                color: 'rgba(255,255,255,0.3)',
-                fontSize: 13,
-            }}>
+            <footer className="mt-15 text-[var(--text-color-secondary)] text-xs opacity-50">
                 © 2026 theone58 · 多源聚合视频平台
             </footer>
         </div>

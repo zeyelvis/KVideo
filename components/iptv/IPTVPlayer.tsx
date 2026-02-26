@@ -229,8 +229,8 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
       const hls = new Hls(HLS_LIVE_CONFIG);
       hlsRef.current = hls;
 
-      let triedProxy = false;
       let triedDirect = false;
+      let triedProxy = false;
 
       const tryDirectVideo = (directUrl: string) => {
         if (triedDirect) {
@@ -243,48 +243,34 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
         vid.src = directUrl;
         vid.addEventListener('canplay', () => {
           markLoaded();
-          vid.play().catch(() => {});
+          vid.play().catch(() => { });
         }, { once: true });
         vid.addEventListener('error', () => {
-          if (directUrl === url) {
-            // Try proxied direct video
-            const vid2 = videoRef.current;
-            if (!vid2) return;
-            vid2.src = proxiedUrl;
-            vid2.addEventListener('canplay', () => {
-              markLoaded();
-              vid2.play().catch(() => {});
-            }, { once: true });
-            vid2.addEventListener('error', () => {
-              markError('播放错误，请尝试其他线路或频道');
-            }, { once: true });
-          } else {
-            markError('播放错误，请尝试其他线路或频道');
-          }
+          markError('播放错误，请尝试其他线路或频道');
         }, { once: true });
       };
 
-      const tryWithProxy = () => {
-        if (triedProxy) {
+      const tryDirect = () => {
+        if (triedDirect) {
           tryDirectVideo(url);
           return;
         }
-        triedProxy = true;
+        triedDirect = true;
         hls.destroy();
-        const hlsProxy = new Hls(HLS_LIVE_CONFIG);
-        hlsRef.current = hlsProxy;
-        hlsProxy.loadSource(proxiedUrl);
-        hlsProxy.attachMedia(video);
-        hlsProxy.on(Hls.Events.MANIFEST_PARSED, () => {
+        const hlsDirect = new Hls(HLS_LIVE_CONFIG);
+        hlsRef.current = hlsDirect;
+        hlsDirect.loadSource(url);
+        hlsDirect.attachMedia(video);
+        hlsDirect.on(Hls.Events.MANIFEST_PARSED, () => {
           markLoaded();
-          video.play().catch(() => {});
+          video.play().catch(() => { });
         });
-        hlsProxy.on(Hls.Events.ERROR, (_, data) => {
+        hlsDirect.on(Hls.Events.ERROR, (_, data) => {
           if (data.fatal) {
             if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
-              hlsProxy.recoverMediaError();
+              hlsDirect.recoverMediaError();
             } else {
-              hlsProxy.destroy();
+              hlsDirect.destroy();
               hlsRef.current = null;
               tryDirectVideo(url);
             }
@@ -292,53 +278,52 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
         });
       };
 
-      // First try direct URL with HLS.js
-      hls.loadSource(url);
+      // 优先通过代理加载（海外用户直连国内源会超时）
+      hls.loadSource(proxiedUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         markLoaded();
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       });
       hls.on(Hls.Events.ERROR, (_, data) => {
         if (data.fatal) {
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            tryWithProxy();
-          } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
             hls.recoverMediaError();
           } else {
-            tryWithProxy();
+            // 代理失败时回退到直连
+            tryDirect();
           }
         }
       });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      // Native HLS (Safari/iOS)
-      video.src = url;
+      // Native HLS (Safari/iOS) - 优先代理
+      video.src = proxiedUrl;
       video.addEventListener('canplay', () => {
         markLoaded();
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       }, { once: true });
       video.addEventListener('error', () => {
-        video.src = proxiedUrl;
+        video.src = url;
         video.addEventListener('canplay', () => {
           markLoaded();
-          video.play().catch(() => {});
+          video.play().catch(() => { });
         }, { once: true });
         video.addEventListener('error', () => {
           markError('播放错误');
         }, { once: true });
       }, { once: true });
     } else {
-      // Direct video fallback
-      video.src = url;
+      // Direct video fallback - 优先代理
+      video.src = proxiedUrl;
       video.addEventListener('canplay', () => {
         markLoaded();
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       }, { once: true });
       video.addEventListener('error', () => {
-        video.src = proxiedUrl;
+        video.src = url;
         video.addEventListener('canplay', () => {
           markLoaded();
-          video.play().catch(() => {});
+          video.play().catch(() => { });
         }, { once: true });
         video.addEventListener('error', () => {
           markError('播放错误，请尝试其他频道');
@@ -372,7 +357,7 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) video.play().catch(() => {});
+    if (video.paused) video.play().catch(() => { });
     else video.pause();
   };
 
@@ -520,11 +505,10 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
           e.stopPropagation();
           onChannelChange(ch);
         }}
-        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${
-          isActive
-            ? 'bg-[var(--accent-color)] text-white'
-            : 'text-white/70 hover:bg-white/10 hover:text-white'
-        }`}
+        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors cursor-pointer ${isActive
+          ? 'bg-[var(--accent-color)] text-white'
+          : 'text-white/70 hover:bg-white/10 hover:text-white'
+          }`}
       >
         <div className="flex items-center gap-2">
           {isActive && (
@@ -532,9 +516,8 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
           )}
           <span className="truncate flex-1">{ch.name}</span>
           {ch.routes && ch.routes.length > 1 && (
-            <span className={`text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 ${
-              isActive ? 'bg-white/20' : 'bg-white/5 text-white/40'
-            }`}>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 ${isActive ? 'bg-white/20' : 'bg-white/5 text-white/40'
+              }`}>
               {ch.routes.length}线路
             </span>
           )}
@@ -783,11 +766,10 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
                   <button
                     key={i}
                     onClick={(e) => { e.stopPropagation(); setCurrentRouteIndex(i); }}
-                    className={`px-2 py-0.5 text-[10px] rounded transition-colors cursor-pointer ${
-                      i === currentRouteIndex
-                        ? 'bg-[var(--accent-color)] text-white'
-                        : 'bg-white/10 text-white/60 hover:bg-white/20'
-                    }`}
+                    className={`px-2 py-0.5 text-[10px] rounded transition-colors cursor-pointer ${i === currentRouteIndex
+                      ? 'bg-[var(--accent-color)] text-white'
+                      : 'bg-white/10 text-white/60 hover:bg-white/20'
+                      }`}
                   >
                     线路{i + 1}
                   </button>

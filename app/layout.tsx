@@ -68,10 +68,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.theone58.com';
 
 export const metadata: Metadata = {
   title: {
-    default: siteConfig.title,
-    template: `%s | ${siteConfig.name}`,
+    default: 'theone58 — 海量片源极速聚合 | 全网影视一键搜索播放平台',
+    template: `%s | theone58`,
   },
-  description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台，支持全网影视资源一键搜索',
+  description: 'theone58 是一款多源视频聚合平台，支持全网影视资源一键搜索、多线路切换、极速播放。覆盖电影、电视剧、综艺、动漫等海量片源，为您提供流畅的在线观影体验。',
   keywords: ['theone58', '视频聚合', '在线观影', '免费电影', '电视剧', '综艺', '动漫', '多源搜索', '影视平台', '海量片源'],
   authors: [{ name: 'theone58' }],
   creator: 'theone58',
@@ -87,9 +87,9 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'zh_CN',
     url: SITE_URL,
-    title: siteConfig.title,
-    description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台',
-    siteName: siteConfig.name,
+    title: 'theone58 — 海量片源极速聚合 | 全网影视一键搜索播放平台',
+    description: 'theone58 是一款多源视频聚合平台，支持全网影视资源一键搜索、多线路切换、极速播放。覆盖电影、电视剧、综艺、动漫等海量片源，为您提供流畅的在线观影体验。',
+    siteName: 'theone58',
     images: [
       {
         url: '/og-image.png',
@@ -101,8 +101,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: siteConfig.title,
-    description: '海量片源 · 极速聚合 — 多源视频聚合搜索和播放平台',
+    title: 'theone58 — 海量片源极速聚合 | 全网影视一键搜索播放平台',
+    description: 'theone58 多源视频聚合平台，支持全网影视资源一键搜索、多线路切换、极速播放。覆盖电影、电视剧、综艺、动漫等海量片源。',
     images: ['/og-image.png'],
   },
   robots: {
