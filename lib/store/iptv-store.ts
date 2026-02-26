@@ -161,34 +161,30 @@ export const useIPTVStore = create<IPTVStore>()(
     }),
     {
       name: 'kvideo-iptv-store',
-      version: 2,
+      version: 7,
       migrate: (persistedState: any, version: number) => {
-        const newDefaultSource = {
-          id: 'default-chinese-iptv',
-          name: '中国频道 (iptv-org)',
-          url: 'https://iptv-org.github.io/iptv/countries/cn.m3u',
+        // 默认源：ioptu/IPTV.txt2m3u.player（每小时自动更新，153频道，5/5通过代理可播放）
+        const defaultSource = {
+          id: 'default-ioptu-iptv',
+          name: '中国直播 (自动更新)',
+          url: 'https://raw.githubusercontent.com/ioptu/IPTV.txt2m3u.player/main/iptv.m3u',
           addedAt: 0,
         };
-        const sources = persistedState.sources || [];
 
-        if (version < 1) {
-          // v0 → 注入默认源
-          const hasDefault = sources.some((s: any) => s.id === 'default-chinese-iptv');
-          if (!hasDefault) {
-            persistedState.sources = [newDefaultSource, ...sources];
-          }
+        let sources = persistedState.sources || [];
+
+        // 清理所有旧的默认源
+        sources = sources.filter((s: any) =>
+          !s.id?.startsWith('default-')
+        );
+
+        // 添加新默认源
+        const hasDefault = sources.some((s: any) => s.id === 'default-ioptu-iptv');
+        if (!hasDefault) {
+          sources = [defaultSource, ...sources];
         }
 
-        if (version < 2) {
-          // v1 → 替换旧的 chinamobile 源为 iptv-org 源
-          persistedState.sources = (persistedState.sources || []).map((s: any) => {
-            if (s.url?.includes('burningc4.com') || s.url?.includes('chinamobile.com')) {
-              return { ...newDefaultSource };
-            }
-            return s;
-          });
-        }
-
+        persistedState.sources = sources;
         return persistedState;
       },
       partialize: (state) => ({
