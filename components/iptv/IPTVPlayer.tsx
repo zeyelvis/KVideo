@@ -113,13 +113,32 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
     }
   }, [channel.sourceId, channel.group]);
 
-  // Track fullscreen changes
+  // Track fullscreen changes (standard + webkit for iOS)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const fsElement = document.fullscreenElement || (document as any).webkitFullscreenElement;
+      setIsFullscreen(!!fsElement);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+    // iOS video fullscreen events
+    const video = videoRef.current;
+    const onBeginFs = () => setIsFullscreen(true);
+    const onEndFs = () => setIsFullscreen(false);
+    if (video) {
+      video.addEventListener('webkitbeginfullscreen', onBeginFs);
+      video.addEventListener('webkitendfullscreen', onEndFs);
+    }
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      if (video) {
+        video.removeEventListener('webkitbeginfullscreen', onBeginFs);
+        video.removeEventListener('webkitendfullscreen', onEndFs);
+      }
+    };
   }, []);
 
   // Controls auto-hide
@@ -387,11 +406,39 @@ export function IPTVPlayer({ channel, onClose, channels, onChannelChange, channe
   };
 
   const toggleFullscreen = async () => {
-    if (!containerRef.current) return;
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    } else {
-      await containerRef.current.requestFullscreen();
+    const video = videoRef.current;
+    const container = containerRef.current;
+    const fsElement = document.fullscreenElement || (document as any).webkitFullscreenElement;
+
+    if (fsElement) {
+      // 退出全屏
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+      return;
+    }
+
+    // 优先尝试容器全屏（桌面端）
+    if (container) {
+      if (container.requestFullscreen) {
+        try {
+          await container.requestFullscreen();
+          return;
+        } catch { /* iOS Safari 对 div 不支持，走下面 video 全屏 */ }
+      }
+      if ((container as any).webkitRequestFullscreen) {
+        try {
+          (container as any).webkitRequestFullscreen();
+          return;
+        } catch { /* fallback */ }
+      }
+    }
+
+    // iOS Safari 回退：使用 video 元素的 webkitEnterFullscreen
+    if (video && (video as any).webkitEnterFullscreen) {
+      (video as any).webkitEnterFullscreen();
     }
   };
 
