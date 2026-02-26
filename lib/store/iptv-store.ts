@@ -161,30 +161,19 @@ export const useIPTVStore = create<IPTVStore>()(
     }),
     {
       name: 'kvideo-iptv-store',
-      version: 8,
+      version: 10,
       migrate: (persistedState: any, version: number) => {
-        // 默认源：ioptu/IPTV.txt2m3u.player 咪咕源（每小时自动更新，103频道，分片完整可播放）
+        // 唯一默认源：咪咕直播（每小时自动更新 token，103 频道）
         const defaultSource = {
-          id: 'default-ioptu-iptv',
-          name: '中国直播 (自动更新)',
+          id: 'default-ioptu-migu',
+          name: '咪咕直播 (自动更新)',
           url: 'https://raw.githubusercontent.com/ioptu/IPTV.txt2m3u.player/main/migu.m3u',
           addedAt: 0,
         };
 
         let sources = persistedState.sources || [];
-
-        // 清理所有旧的默认源
-        sources = sources.filter((s: any) =>
-          !s.id?.startsWith('default-')
-        );
-
-        // 添加新默认源
-        const hasDefault = sources.some((s: any) => s.id === 'default-ioptu-iptv');
-        if (!hasDefault) {
-          sources = [defaultSource, ...sources];
-        }
-
-        persistedState.sources = sources;
+        sources = sources.filter((s: any) => !s.id?.startsWith('default-'));
+        persistedState.sources = [defaultSource, ...sources];
         return persistedState;
       },
       partialize: (state) => ({

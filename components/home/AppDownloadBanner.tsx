@@ -22,46 +22,20 @@ function detectMobilePlatform(): DetectedPlatform {
     return null;
 }
 
-// 根据设备和时间段给出不同的提示语
-function getSmartMessage(platform: DetectedPlatform): { title: string; subtitle: string } {
-    const hour = new Date().getHours();
-    const isNight = hour >= 20 || hour < 6;
-    const isEvening = hour >= 17 && hour < 20;
-
-    const contextHint = isNight
-        ? '夜间追剧更舒适'
-        : isEvening
-            ? '下班时间，来一部好片'
-            : '随时随地享受观影';
-
+// 根据设备给出简洁的提示语
+function getSmartMessage(platform: DetectedPlatform): string {
     switch (platform) {
-        case 'ios':
-            return {
-                title: '📱 更适合 iPhone 的观影体验',
-                subtitle: `客户端更流畅 · ${contextHint}`,
-            };
-        case 'android':
-            return {
-                title: '🤖 Android 客户端已上线',
-                subtitle: `离线缓存 · 后台播放 · ${contextHint}`,
-            };
-        case 'macos':
-            return {
-                title: '💻 Mac 桌面版更沉浸',
-                subtitle: `独立窗口 · 画中画 · ${contextHint}`,
-            };
-        default:
-            return {
-                title: '下载客户端',
-                subtitle: contextHint,
-            };
+        case 'ios': return '体验更流畅的 iOS 客户端';
+        case 'android': return '获取 Android 客户端';
+        case 'macos': return '获取 Mac 桌面客户端';
+        default: return '获取客户端';
     }
 }
 
 const platformAction: Record<string, string> = {
-    ios: '获取 iOS 版',
-    android: '获取 Android 版',
-    macos: '获取桌面版',
+    ios: '立即获取',
+    android: '立即获取',
+    macos: '立即获取',
 };
 
 export function AppDownloadBanner() {
@@ -112,41 +86,80 @@ export function AppDownloadBanner() {
 
     return (
         <div
-            className={`
-                fixed bottom-5 left-1/2 z-9999 flex items-center gap-3 px-5 py-3
-                bg-[var(--glass-bg)] backdrop-blur-xl border border-[var(--glass-border)]
-                rounded-2xl shadow-lg max-w-[calc(100vw-32px)]
-                transition-all duration-400 ease-out
-                ${show
-                    ? 'opacity-100 -translate-x-1/2 translate-y-0'
-                    : 'opacity-0 -translate-x-1/2 translate-y-5'
-                }
-            `}
+            style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 9999,
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                transition: 'transform 0.4s ease, opacity 0.4s ease',
+                transform: show ? 'translateY(0)' : 'translateY(100%)',
+                opacity: show ? 1 : 0,
+            }}
         >
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="text-[var(--text-color)] text-sm font-semibold">
-                    {message.title}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    background: 'var(--glass-bg, rgba(255,255,255,0.95))',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    borderTop: '1px solid var(--glass-border, rgba(0,0,0,0.08))',
+                    boxShadow: '0 -2px 20px rgba(0,0,0,0.08)',
+                }}
+            >
+                {/* 图标 */}
+                <div style={{
+                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18,
+                }}>
+                    {platform === 'ios' ? '📱' : platform === 'android' ? '🤖' : '💻'}
                 </div>
-                <div className="text-[var(--text-color-secondary)] text-xs mt-0.5">
-                    {message.subtitle}
+
+                {/* 文案 - 单行 */}
+                <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-color, #1a1a1a)' }}>
+                        {message}
+                    </span>
                 </div>
+
+                {/* 按钮 */}
+                <Link
+                    href="/download"
+                    style={{
+                        padding: '8px 16px',
+                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                        color: '#fff',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        borderRadius: 20,
+                        textDecoration: 'none',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                    }}
+                >
+                    {platformAction[platform]}
+                </Link>
+
+                {/* 关闭 */}
+                <button
+                    onClick={handleDismiss}
+                    style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'var(--text-color-secondary, #999)',
+                        fontSize: 20, lineHeight: 1, padding: '0 2px', flexShrink: 0,
+                    }}
+                    aria-label="关闭"
+                >
+                    ×
+                </button>
             </div>
-
-            <Link
-                href="/download"
-                className="px-4 py-2 text-white text-xs font-semibold rounded-lg no-underline whitespace-nowrap transition-transform hover:scale-105"
-                style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
-            >
-                {platformAction[platform]}
-            </Link>
-
-            <button
-                onClick={handleDismiss}
-                className="text-[var(--text-color-secondary)] hover:text-[var(--text-color)] cursor-pointer bg-transparent border-none text-lg px-1 leading-none transition-colors"
-                aria-label="关闭"
-            >
-                ×
-            </button>
         </div>
     );
 }
+
