@@ -1,12 +1,14 @@
 'use client';
 
 /**
- * DisplaySettings - Settings for search display and latency
+ * DisplaySettings - Settings for theme, search display and latency
  * Following Liquid Glass design system
  */
 
 import { type SearchDisplayMode } from '@/lib/store/settings-store';
 import { Switch } from '@/components/ui/Switch';
+import { useTheme } from '@/components/ThemeProvider';
+import { Icons } from '@/components/ui/Icon';
 
 interface DisplaySettingsProps {
     realtimeLatency: boolean;
@@ -25,9 +27,43 @@ export function DisplaySettings({
     onSearchDisplayModeChange,
     onRememberScrollPositionChange,
 }: DisplaySettingsProps) {
+    const { theme, setTheme } = useTheme();
+
+    const themeOptions: { value: 'system' | 'light' | 'dark'; label: string; icon: React.ReactNode; desc: string }[] = [
+        { value: 'system', label: '跟随系统', icon: <Icons.Monitor size={18} />, desc: '自动适配系统主题' },
+        { value: 'light', label: '浅色模式', icon: <Icons.Sun size={18} />, desc: '明亮的白天主题' },
+        { value: 'dark', label: '深色模式', icon: <Icons.Moon size={18} />, desc: '护眼的暗黑主题' },
+    ];
+
     return (
         <div className="bg-[var(--glass-bg)] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-sm)] p-6 mb-6">
             <h2 className="text-xl font-semibold text-[var(--text-color)] mb-4">显示设置</h2>
+
+            {/* Theme Selector */}
+            <div className="mb-6">
+                <h3 className="font-medium text-[var(--text-color)] mb-2">主题模式</h3>
+                <p className="text-sm text-[var(--text-color-secondary)] mb-4">
+                    选择应用的外观主题
+                </p>
+                <div className="grid grid-cols-3 gap-3">
+                    {themeOptions.map((opt) => (
+                        <button
+                            key={opt.value}
+                            onClick={() => setTheme(opt.value)}
+                            className={`px-3 py-3 rounded-[var(--radius-2xl)] border text-center font-medium transition-all duration-200 cursor-pointer ${theme === opt.value
+                                ? 'bg-[var(--accent-color)] border-[var(--accent-color)] text-white shadow-[0_4px_12px_rgba(var(--accent-color-rgb),0.3)]'
+                                : 'bg-[var(--glass-bg)] border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)]'
+                                }`}
+                        >
+                            <div className="flex flex-col items-center gap-1.5">
+                                {opt.icon}
+                                <span className="text-sm font-semibold">{opt.label}</span>
+                                <span className="text-xs opacity-70 hidden sm:block">{opt.desc}</span>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* Remember Scroll Position Toggle */}
             <div className="mb-6">

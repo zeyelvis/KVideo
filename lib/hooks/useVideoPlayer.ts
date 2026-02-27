@@ -123,6 +123,8 @@ export function useVideoPlayer(
         } else {
           setVideoError('该来源没有可播放的剧集');
           setLoading(false);
+          // 触发自动切换到其他源
+          onSourceUnavailableRef.current?.();
         }
       } else {
         throw new Error(data.error || '来自 API 的响应无效');

@@ -67,6 +67,19 @@ export default function DownloadPage() {
 
     return (
         <div className="min-h-screen bg-[var(--bg-color)] bg-[image:var(--bg-image)] text-[var(--text-color)] flex flex-col items-center px-5 py-15 font-sans">
+            {/* 返回按钮 */}
+            <div className="w-full max-w-3xl mb-6">
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color-secondary)] hover:text-[var(--text-color)] transition-all duration-200 backdrop-blur-xl text-sm"
+                >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 12H5" /><polyline points="12 19 5 12 12 5" />
+                    </svg>
+                    返回首页
+                </Link>
+            </div>
+
             {/* 头部 */}
             <div className="text-center mb-15">
                 <div className="text-5xl font-extrabold mb-4" style={{

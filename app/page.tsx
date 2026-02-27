@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, useMemo } from 'react';
-import { SearchForm } from '@/components/search/SearchForm';
+import { SearchLoadingAnimation } from '@/components/SearchLoadingAnimation';
 import { NoResults } from '@/components/search/NoResults';
 import { PopularFeatures } from '@/components/home/PopularFeatures';
 import { WatchHistorySidebar } from '@/components/history/WatchHistorySidebar';
@@ -38,24 +38,27 @@ function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Glass Navbar */}
-      <Navbar onReset={handleReset} />
+      {/* Glass Navbar with integrated search */}
+      <Navbar
+        onReset={handleReset}
+        onSearch={handleSearch}
+        onClearSearch={handleReset}
+        initialQuery={query}
+        isSearching={loading}
+      />
 
-      {/* Search Form - Separate from navbar */}
-      <div className="max-w-7xl mx-auto px-4 mt-6 mb-8 relative" style={{
-        transform: 'translate3d(0, 0, 0)',
-        zIndex: 1000
-      }}>
-        <SearchForm
-          onSearch={handleSearch}
-          onClear={handleReset}
-          isLoading={loading}
-          initialQuery={query}
-          currentSource=""
-          checkedSources={completedSources}
-          totalSources={totalSources}
-        />
-      </div>
+      {/* Search Loading Animation - 在导航栏下方显示 */}
+      {loading && (
+        <div className="max-w-7xl mx-auto px-4 mt-4">
+          <div className="max-w-3xl mx-auto">
+            <SearchLoadingAnimation
+              currentSource=""
+              checkedSources={completedSources}
+              totalSources={totalSources}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">

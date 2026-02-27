@@ -77,7 +77,7 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
                 onBlur={handleInputBlur}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                className="text-base sm:text-lg pr-28 sm:pr-36 md:pr-44 truncate"
+                className="text-sm sm:text-lg pr-20 sm:pr-36 md:pr-44 truncate h-9 sm:h-auto"
                 aria-label="搜索视频内容"
                 aria-expanded={isDropdownOpen}
                 aria-controls="search-history-dropdown"
@@ -90,20 +90,20 @@ export function SearchBox({ onSearch, onClear, initialQuery = '', placeholder = 
                     <button
                         type="button"
                         onClick={handleClear}
-                        className="p-2 text-[var(--text-color)] opacity-70 hover:opacity-100 transition-opacity touch-manipulation cursor-pointer"
+                        className="p-1.5 sm:p-2 text-[var(--text-color)] opacity-70 hover:opacity-100 transition-opacity touch-manipulation cursor-pointer"
                         aria-label="清除搜索"
                     >
-                        <Icons.X size={20} />
+                        <Icons.X size={16} className="sm:w-5 sm:h-5" />
                     </button>
                 )}
                 <Button
                     type="submit"
                     disabled={!query.trim()}
                     variant="primary"
-                    className="px-3 sm:px-4 md:px-6"
+                    className="px-2.5 sm:px-4 md:px-6 !min-h-0 h-7 sm:h-[44px] py-1 sm:py-2.5 text-xs sm:text-sm rounded-full sm:rounded-[var(--radius-2xl)]"
                 >
-                    <span className="flex items-center gap-2">
-                        <Icons.Search size={20} />
+                    <span className="flex items-center gap-1.5 sm:gap-2">
+                        <Icons.Search size={14} className="sm:w-5 sm:h-5" />
                         <span className="hidden sm:inline">搜索</span>
                     </span>
                 </Button>

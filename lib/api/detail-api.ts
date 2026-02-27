@@ -50,14 +50,29 @@ export async function getVideoDetail(
         const playFrom = (videoData.vod_play_from || '').split('$$$');
         const playUrls = (videoData.vod_play_url || '').split('$$$');
 
-        // Find the best source (prioritize m3u8)
-        let selectedIndex = 0;
+        // Find the best source: prioritize m3u8, but ensure it has actual content
+        let selectedIndex = -1;
 
-        // Try to find a source that contains 'm3u8' in its name or code
-        const m3u8Index = playFrom.findIndex(code => code.toLowerCase().includes('m3u8'));
-        if (m3u8Index !== -1 && m3u8Index < playUrls.length) {
-            selectedIndex = m3u8Index;
+        // 1. Try m3u8 sources first (only if they have actual URLs)
+        for (let i = 0; i < playFrom.length; i++) {
+            if (playFrom[i].toLowerCase().includes('m3u8') && playUrls[i]?.trim()) {
+                selectedIndex = i;
+                break;
+            }
         }
+
+        // 2. If no valid m3u8, fall back to any source with actual content
+        if (selectedIndex === -1) {
+            for (let i = 0; i < playUrls.length; i++) {
+                if (playUrls[i]?.trim()) {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 3. If still nothing, use index 0 as last resort
+        if (selectedIndex === -1) selectedIndex = 0;
 
         // Parse episodes from the selected source
         const episodes = parseEpisodes(playUrls[selectedIndex] || '');
