@@ -177,7 +177,8 @@ body.tv-mode h2 {
     font-size: 2rem !important;
 }
 
-body.tv-mode h3, body.tv-mode h4 {
+body.tv-mode h3,
+body.tv-mode h4 {
     font-size: 1.25rem !important;
 }
 
@@ -268,6 +269,24 @@ body.tv-mode [class*="Badge"],
 body.tv-mode [class*="rounded-full"][class*="px-"] {
     font-size: 0.875rem !important;
     padding: 0.375rem 0.75rem !important;
+}
+
+/* 内容类型切换按钮 - 不受上面通用规则干扰 */
+body.tv-mode .content-type-toggle {
+    padding: 0 !important;
+    min-height: auto;
+    min-width: auto;
+    width: 24rem;
+}
+
+body.tv-mode .content-type-toggle button {
+    padding: 0.75rem 1rem !important;
+    min-height: auto;
+    font-size: 1.1rem !important;
+}
+
+body.tv-mode .content-type-toggle>div[class*="rounded-full"] {
+    padding: 0 !important;
 }
 
 /* --- 7. 卡片信息区域 --- */
