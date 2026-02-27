@@ -6,6 +6,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useHistory } from '@/lib/store/history-store';
 import { Icons } from '@/components/ui/Icon';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -24,6 +25,29 @@ export function WatchHistorySidebar({ isPremium = false }: { isPremium?: boolean
   const { viewingHistory, removeFromHistory, clearHistory } = useHistory(isPremium);
   const sidebarRef = useRef<HTMLElement>(null);
   const cleanupFocusTrapRef = useRef<(() => void) | null>(null);
+
+  // 播放页隐藏浮动按钮
+  const pathname = usePathname();
+  const isPlayerPage = pathname?.startsWith('/player');
+
+  // 滚动时隐藏浮动按钮
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolling(true);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      scrollTimerRef.current = setTimeout(() => setIsScrolling(false), 1500);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
+  }, []);
+
+  const showToggle = !isPlayerPage && !isScrolling;
 
   // Setup focus trap when sidebar opens
   useEffect(() => {
@@ -83,10 +107,10 @@ export function WatchHistorySidebar({ isPremium = false }: { isPremium?: boolean
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed right-6 top-1/2 -translate-y-1/2 z-40 bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-md)] p-3 hover:scale-105 transition-transform duration-200 cursor-pointer"
+        className={`fixed right-6 top-1/2 -translate-y-1/2 z-40 bg-[var(--glass-bg)] backdrop-blur-[8px] saturate-[120%] border border-[var(--glass-border)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-md)] p-3 hover:scale-105 transition-all duration-300 cursor-pointer ${showToggle ? 'opacity-60 hover:opacity-100' : 'opacity-0 pointer-events-none'}`}
         aria-label="打开观看历史"
       >
-        <Icons.History size={24} className="text-[var(--text-color)]" />
+        <Icons.History size={20} className="text-[var(--text-color)]" />
       </button>
 
       {/* Backdrop */}

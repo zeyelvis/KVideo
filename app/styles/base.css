@@ -339,14 +339,17 @@ body.tv-mode .pb-20 {
 body.tv-mode [data-focusable] {
     min-height: 3rem;
     min-width: 3rem;
-    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, outline 0.15s ease-out;
+    /* 使用 will-change 提示 GPU 预分配合成层，减少焦点切换时的重绘 */
+    will-change: transform;
+    /* 缩短 transition 到 100ms，TV 硬件更流畅 */
+    transition: transform 0.1s ease-out, outline-color 0.1s ease-out;
 }
 
 body.tv-mode [data-focusable]:focus {
-    outline: 4px solid var(--accent-color);
-    outline-offset: 6px;
-    box-shadow: 0 0 0 8px rgba(0, 122, 255, 0.25);
-    transform: scale(1.04);
+    outline: 3px solid var(--accent-color);
+    outline-offset: 4px;
+    transform: scale(1.03);
+    /* 移除 box-shadow 动画，改用静态 outline，减少 GPU 合成层数 */
 }
 
 /* --- 10. 侧边栏面板 --- */
@@ -362,11 +365,35 @@ body.tv-mode [class*="Icons"] svg {
     height: 1.5em !important;
 }
 
-/* --- 12. 滚动条放大 --- */
+/* --- 12. 滚动条 --- */
 body.tv-mode ::-webkit-scrollbar {
-    width: 14px;
+    width: 0;
+    display: none;
 }
 
-body.tv-mode ::-webkit-scrollbar-thumb {
-    border: 3px solid transparent;
+body.tv-mode {
+    scrollbar-width: none;
+}
+
+/* --- 13. 关闭重渲染 CSS 效果，提升 TV 浏览器性能 --- */
+body.tv-mode * {
+    /* backdrop-filter 是 TV 浏览器的头号性能杀手 */
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* 毛玻璃背景改为不透明，补偿 backdrop-filter 关闭后的视觉缺失 */
+body.tv-mode [class*="glass-bg"] {
+    background: var(--bg-color) !important;
+    opacity: 0.97;
+}
+
+/* 禁用所有非焦点元素的 transition，减少 GPU 负载 */
+body.tv-mode *:not([data-focusable]) {
+    transition-duration: 0s !important;
+}
+
+/* 禁用 hover 效果（TV 没有鼠标） */
+body.tv-mode *:hover {
+    transform: none !important;
 }

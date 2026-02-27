@@ -38,20 +38,20 @@ export function BackToTop() {
     return (
         <button
             onClick={scrollToTop}
-            className={`fixed bottom-8 right-8 z-[9999] p-3 rounded-full 
+            className={`fixed bottom-20 right-6 z-[9999] p-2.5 rounded-full 
                         bg-[var(--glass-bg)] border border-[var(--glass-border)] 
                         shadow-[var(--shadow-md)] backdrop-blur-xl 
                         text-[var(--text-color)] transition-all duration-300 ease-out
                         hover:bg-[color-mix(in_srgb,var(--accent-color)_15%,transparent)] 
                         hover:scale-110 active:scale-95
                         ${isVisible
-                    ? 'opacity-100 translate-y-0 scale-100'
+                    ? 'opacity-60 hover:opacity-100 translate-y-0 scale-100'
                     : 'opacity-0 translate-y-10 scale-50 pointer-events-none'
                 }`}
             aria-label="返回顶部"
             title="返回顶部"
         >
-            <ChevronUp size={24} strokeWidth={2.5} />
+            <ChevronUp size={20} strokeWidth={2.5} />
         </button>
     );
 }
