@@ -46,11 +46,12 @@ export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
 
         const fetchBackdrops = async () => {
             try {
-                const titles = currentData.map(m => m.title);
+                // 传递 title + year，用年份精确匹配避免同名不同版本
+                const items = currentData.map(m => ({ title: m.title, year: m.year }));
                 const res = await fetch('/api/tmdb/trending', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ titles }),
+                    body: JSON.stringify({ items, type: contentType }),
                 });
                 const data = await res.json();
                 const bds: Record<string, string | null> = {};
