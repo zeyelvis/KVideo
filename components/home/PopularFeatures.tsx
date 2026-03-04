@@ -13,7 +13,7 @@ import { TagManager } from './TagManager';
 import { MovieGrid } from './MovieGrid';
 import { useTagManager } from './hooks/useTagManager';
 import { usePopularMovies } from './hooks/usePopularMovies';
-import { RankingCarousel } from './RankingCarousel';
+import { HeroSlideshow } from './TmdbSlideshow';
 
 interface PopularFeaturesProps {
   onSearch?: (query: string) => void;
@@ -75,8 +75,8 @@ export function PopularFeatures({ onSearch }: PopularFeaturesProps) {
 
   return (
     <div className="animate-fade-in">
-      {/* 🏆 排行榜幻灯片 Hero（与三联按钮联动） */}
-      <RankingCarousel contentType={contentType} />
+      {/* 🏆 Hero 排行榜幻灯片 — 基于 RankingCarousel 布局 + TMDB Backdrop */}
+      <HeroSlideshow contentType={contentType} onSearch={onSearch} />
 
       {/* Content Type Toggle (Capsule Liquid Glass - Fixed & Centered) */}
       <div className="mb-4 flex justify-center">

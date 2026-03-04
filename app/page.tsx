@@ -47,7 +47,7 @@ function HomePage() {
         isSearching={loading}
       />
 
-      {/* Search Loading Animation - 在导航栏下方显示 */}
+      {/* Search Loading Animation */}
       {loading && (
         <div className="max-w-7xl mx-auto px-4 mt-4">
           <div className="max-w-3xl mx-auto">
@@ -74,9 +74,7 @@ function HomePage() {
 
         {/* Popular Features - Homepage */}
         {!loading && !hasSearched && (
-          <>
-            <PopularFeatures onSearch={handleSearch} />
-          </>
+          <PopularFeatures onSearch={handleSearch} />
         )}
 
         {/* No Results */}
