@@ -4,6 +4,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'edge';
+
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA'; // 测试密钥
 const TURNSTILE_TEST_SECRET_KEY = '1x0000000000000000000000000000000AA'; // Cloudflare 官方测试密钥
 
