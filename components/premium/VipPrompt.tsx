@@ -164,7 +164,7 @@ export function VipPrompt({ asModal = false, onClose, onOpenLogin }: VipPromptPr
                                 登录 / 注册
                             </button>
                             <p className="text-center text-white/30 text-xs">
-                                注册即送 <span className="text-amber-400/80">1 天 VIP</span> 体验
+                                注册即送 <span className="text-amber-400/80">30 天 VIP</span> 体验
                             </p>
                         </>
                     )}

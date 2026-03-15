@@ -8,11 +8,12 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
     User, Gift, Film, Palette, Radio, Database,
-    ArrowLeft, Crown, LogOut, Mail, Calendar, Shield, Tv,
+    Crown, LogOut, Mail, Calendar, Shield, Tv,
     X, MailCheck, Sparkles
 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/user-store';
 import { AuthModal } from '@/components/auth/AuthModal';
+import { Navbar } from '@/components/layout/Navbar';
 import { CheckInCard } from '@/components/auth/CheckInCard';
 
 // Settings 组件复用
@@ -130,24 +131,8 @@ function ProfileContent() {
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-color)', backgroundImage: 'var(--bg-image)' }}>
-            {/* 顶部导航 */}
-            <div className="sticky top-0 z-50 backdrop-blur-xl shadow-sm"
-                style={{ backgroundColor: 'var(--bg-color)', borderBottom: '1px solid var(--glass-border, rgba(255,255,255,0.08))' }}>
-                <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-                    <button
-                        onClick={() => router.push('/')}
-                        className="p-2 rounded-xl transition-colors cursor-pointer"
-                        style={{ color: 'var(--text-color)' }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--glass-bg, rgba(255,255,255,0.05))'}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h1 className="text-lg font-bold" style={{ color: 'var(--text-color)' }}>
-                        个人中心
-                    </h1>
-                </div>
-            </div>
+            {/* 顶部导航 — 复用全局 Navbar 保持统一 */}
+            <Navbar variant="player" />
 
             <div className="max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-6">
                 {/* 普通用户：单页展示，无侧边栏 */}
