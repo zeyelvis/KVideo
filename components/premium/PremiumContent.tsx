@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { TagManager } from '@/components/home/TagManager';
-import { MovieGrid } from '@/components/home/MovieGrid';
 import { PremiumContentGrid } from './PremiumContentGrid';
 import { usePremiumTagManager } from '@/lib/hooks/usePremiumTagManager';
 import { usePremiumContent } from '@/lib/hooks/usePremiumContent';
@@ -75,6 +74,16 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
         setSelectedTag(tagId);
     };
 
+    // 将豆瓣推荐数据适配为 PremiumContentGrid 所需的 Video 类型
+    const adaptedRecommendVideos = recommendMovies.map((m: any) => ({
+        vod_id: m.id,
+        vod_name: m.title,
+        vod_pic: m.cover,
+        vod_remarks: m.rate ? `${m.rate}分` : '',
+        type_name: m.sourceLabel || '',
+        source: 'douban',
+    }));
+
     return (
         <div className="animate-fade-in">
             <TagManager
@@ -99,11 +108,11 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
             />
 
             {effectiveRecommendSelected ? (
-                <MovieGrid
-                    movies={recommendMovies}
+                <PremiumContentGrid
+                    videos={adaptedRecommendVideos}
                     loading={recommendLoading}
                     hasMore={recommendHasMore}
-                    onMovieClick={handleVideoClick}
+                    onVideoClick={handleVideoClick}
                     prefetchRef={recommendPrefetchRef}
                     loadMoreRef={recommendLoadMoreRef}
                 />
@@ -120,3 +129,4 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
         </div>
     );
 }
+
