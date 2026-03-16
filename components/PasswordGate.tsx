@@ -15,16 +15,29 @@ export function PasswordGate({ children, hasAuth: initialHasAuth }: { children: 
     const [error, setError] = useState(false);
     const [isClient, setIsClient] = useState(false);
     const [hasAuth, setHasAuth] = useState(initialHasAuth);
-    const [persistSession, setPersistSession] = useState(true);
     const [isValidating, setIsValidating] = useState(false);
 
     useEffect(() => {
         let mounted = true;
 
         const init = async () => {
-            // Check if already has a valid session
+            // Check if already has a valid PasswordGate session
             const session = getSession();
-            const isAuthenticated = !!session;
+            let isAuthenticated = !!session;
+
+            // 如果 PasswordGate session 不存在，检查 Supabase session
+            // Supabase 登录的用户应该自动绕过站点密码门
+            if (!isAuthenticated) {
+                try {
+                    const { supabase } = await import('@/lib/supabase/client');
+                    const { data: { session: sbSession } } = await supabase.auth.getSession();
+                    if (sbSession?.user) {
+                        isAuthenticated = true;
+                    }
+                } catch {
+                    // Supabase 不可用时回退到 PasswordGate 逻辑
+                }
+            }
 
             // Initial fast check
             const localLocked = initialHasAuth && !isAuthenticated;
@@ -43,7 +56,6 @@ export function PasswordGate({ children, hasAuth: initialHasAuth }: { children: 
                 if (mounted) {
                     setHasAuth(data.hasAuth);
                     setAuthConfigured(data.hasAuth); // 通知 auth-store 旧认证系统是否启用
-                    setPersistSession(data.persistSession);
 
                     // Sync subscriptions
                     if (data.subscriptionSources) {
@@ -82,7 +94,7 @@ export function PasswordGate({ children, hasAuth: initialHasAuth }: { children: 
                     name: data.name,
                     role: data.role,
                     customPermissions: data.customPermissions,
-                }, data.persistSession ?? persistSession);
+                });
 
                 // Reload to re-initialize stores with profiled keys
                 window.location.reload();

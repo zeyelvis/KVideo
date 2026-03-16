@@ -47,8 +47,8 @@ export function isAuthConfigured(): boolean {
 export function getSession(): AuthSession | null {
   if (typeof window === 'undefined') return null;
 
-  // Check sessionStorage first, then localStorage (for persisted sessions)
-  const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+  // 始终从 localStorage 读取（持久化会话）
+  const raw = localStorage.getItem(SESSION_KEY);
   if (!raw) return null;
 
   try {
@@ -62,19 +62,18 @@ export function getSession(): AuthSession | null {
   return null;
 }
 
-export function setSession(session: AuthSession, persist: boolean): void {
+export function setSession(session: AuthSession): void {
   if (typeof window === 'undefined') return;
   const data = JSON.stringify(session);
-  sessionStorage.setItem(SESSION_KEY, data);
-  if (persist) {
-    localStorage.setItem(SESSION_KEY, data);
-  }
+  // 始终持久化到 localStorage，关闭浏览器后登录状态不会丢失
+  localStorage.setItem(SESSION_KEY, data);
 }
 
 export function clearSession(): void {
   if (typeof window === 'undefined') return;
-  sessionStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(SESSION_KEY);
+  // 清理旧版 sessionStorage (向后兼容)
+  sessionStorage.removeItem(SESSION_KEY);
   // Clear search cache so new session gets fresh results
   localStorage.removeItem('kvideo_search_cache');
   // Also clear old unlock keys for backward compat cleanup
