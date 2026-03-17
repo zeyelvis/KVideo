@@ -31,53 +31,80 @@ export function PremiumSlideshow({ onSearch }: PremiumSlideshowProps) {
     const [isPaused, setIsPaused] = useState(false);
 
     // 获取推荐数据
+    const fetchedRef = useRef(false);
+
+    const fetchSlides = useCallback(async () => {
+        try {
+            // 从设置中获取 premium sources
+            const { settingsStore } = await import('@/lib/store/settings-store');
+            const settings = settingsStore.getSettings();
+            const premiumSources = [
+                ...settings.premiumSources,
+                ...settings.subscriptions.filter((s: any) => s.group === 'premium')
+            ].filter((s: any) => s.enabled !== false);
+
+            if (premiumSources.length === 0) {
+                // 源还没加载，不设为 loading=false，等待 settings 更新后重试
+                return;
+            }
+
+            const response = await fetch('/api/premium/category', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sources: premiumSources,
+                    category: '',
+                    page: '1',
+                    limit: '30'
+                })
+            });
+
+            if (!response.ok) throw new Error('fetch failed');
+            const data = await response.json();
+            const videos = data.videos || [];
+
+            // 筛选有封面图的影片，取前 5 个
+            const withCover = videos.filter((v: any) => v.vod_pic && v.vod_pic.startsWith('http'));
+            fetchedRef.current = true;
+            setSlides(withCover.slice(0, 5));
+            setLoading(false);
+        } catch {
+            setLoading(false);
+        }
+    }, []);
+
+    // 首次加载
+    useEffect(() => {
+        fetchSlides();
+    }, [fetchSlides]);
+
+    // 订阅设置变化，源异步加载完成后自动重试
     useEffect(() => {
         let cancelled = false;
 
-        const fetchSlides = async () => {
-            try {
-                // 从设置中获取 premium sources
-                const { settingsStore } = await import('@/lib/store/settings-store');
-                const settings = settingsStore.getSettings();
-                const premiumSources = [
-                    ...settings.premiumSources,
-                    ...settings.subscriptions.filter((s: any) => s.group === 'premium')
-                ].filter((s: any) => s.enabled !== false);
-
-                if (premiumSources.length === 0) {
-                    setLoading(false);
-                    return;
-                }
-
-                const response = await fetch('/api/premium/category', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sources: premiumSources,
-                        category: '',
-                        page: '1',
-                        limit: '30'
-                    })
-                });
-
-                if (!response.ok) throw new Error('fetch failed');
-                const data = await response.json();
-                const videos = data.videos || [];
-
-                // 筛选有封面图的影片，取前 5 个
-                const withCover = videos.filter((v: any) => v.vod_pic && v.vod_pic.startsWith('http'));
-                if (!cancelled) {
-                    setSlides(withCover.slice(0, 5));
-                    setLoading(false);
-                }
-            } catch {
-                if (!cancelled) setLoading(false);
-            }
+        const initSubscription = async () => {
+            const { settingsStore } = await import('@/lib/store/settings-store');
+            const unsubscribe = settingsStore.subscribe(() => {
+                if (cancelled || fetchedRef.current) return;
+                fetchSlides();
+            });
+            return unsubscribe;
         };
 
-        fetchSlides();
-        return () => { cancelled = true; };
-    }, []);
+        let unsubFn: (() => void) | undefined;
+        initSubscription().then(unsub => {
+            if (cancelled) {
+                unsub();
+            } else {
+                unsubFn = unsub;
+            }
+        });
+
+        return () => {
+            cancelled = true;
+            unsubFn?.();
+        };
+    }, [fetchSlides]);
 
     // 自动轮播
     useEffect(() => {

@@ -19,39 +19,35 @@ export function usePremiumContent(categoryValue: string) {
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(1);
 
-    // Track source count to detect meaningful updates
-    const sourceCountRef = useRef(0);
+    // 用 ref 追踪 loading 状态，避免 useCallback 依赖 loading 导致死循环
+    const loadingRef = useRef(false);
+    const categoryRef = useRef(categoryValue);
+    categoryRef.current = categoryValue;
 
     const loadVideos = useCallback(async (pageNum: number, append = false) => {
-        if (loading) return;
+        if (loadingRef.current) return;
 
+        loadingRef.current = true;
         setLoading(true);
         try {
-            // Get sources from settings
+            // 获取 premium 源
             const settings = settingsStore.getSettings();
-            // Resolve all relevant sources (premium sources + subscriptions that might be premium)
-            // For simplicity, we send all enabled premium sources.
             const premiumSources = [
                 ...settings.premiumSources,
-                // Check if any subscription sources are marked as premium
                 ...settings.subscriptions.filter(s => (s as any).group === 'premium')
             ].filter(s => (s as any).enabled !== false);
 
             if (premiumSources.length === 0) {
-                setLoading(false);
+                // 源还没加载，不算错，保持 hasMore 以便重试
                 return;
             }
-
-            // Should we include normal subscriptions too if categoryValue requests them?
-            // The API handles filtering by categoryValue map.
-            // If categoryValue is empty (Recommend), we use all enabled premium sources.
 
             const response = await fetch('/api/premium/category', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     sources: premiumSources,
-                    category: categoryValue,
+                    category: categoryRef.current,
                     page: pageNum.toString(),
                     limit: PAGE_LIMIT.toString()
                 })
@@ -63,30 +59,25 @@ export function usePremiumContent(categoryValue: string) {
             const newVideos = data.videos || [];
 
             setVideos(prev => append ? [...prev, ...newVideos] : newVideos);
-            setHasMore(newVideos.length === PAGE_LIMIT);
+            setHasMore(newVideos.length >= PAGE_LIMIT);
         } catch (error) {
             console.error('Failed to load videos:', error);
             setHasMore(false);
         } finally {
+            loadingRef.current = false;
             setLoading(false);
         }
-    }, [loading, categoryValue]);
+    }, []); // 不依赖 loading 和 categoryValue，用 ref 代替
 
-    // Initial load and category change
+    // 分类变化时重置并重新加载
     useEffect(() => {
         setPage(1);
         setVideos([]);
         setHasMore(true);
-
-        // Initial check for sources
-        const settings = settingsStore.getSettings();
-        const sourcesCount = settings.premiumSources.length + settings.subscriptions.length;
-        sourceCountRef.current = sourcesCount;
-
         loadVideos(1, false);
-    }, [categoryValue]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [categoryValue, loadVideos]);
 
-    // Subscribe to settings changes to handle async source loading
+    // 订阅设置变化，源异步加载完成后自动重试
     useEffect(() => {
         const handleSettingsUpdate = () => {
             const settings = settingsStore.getSettings();
@@ -95,20 +86,22 @@ export function usePremiumContent(categoryValue: string) {
                 ...settings.subscriptions.filter(s => (s as any).group === 'premium')
             ].filter(s => (s as any).enabled !== false);
 
-            const currentSourceCount = premiumSources.length;
-
-            // If we have 0 videos and suddenly gain sources, we should retry loading
-            // OR if the number of sources significantly changed (e.g. from 0 to N)
-            if (videos.length === 0 && currentSourceCount > 0 && !loading) {
-                // Determine if we should reload. 
-                // Mostly needed when initial load failed due to no sources.
-                loadVideos(1, false);
+            // 如果当前没有视频且有可用源且未在加载，自动重试
+            if (premiumSources.length > 0 && !loadingRef.current) {
+                // 获取当前状态判断是否需要重新加载
+                setVideos(currentVideos => {
+                    if (currentVideos.length === 0) {
+                        // 用 setTimeout 避免在 setState 回调中执行异步操作
+                        setTimeout(() => loadVideos(1, false), 0);
+                    }
+                    return currentVideos;
+                });
             }
         };
 
         const unsubscribe = settingsStore.subscribe(handleSettingsUpdate);
         return () => unsubscribe();
-    }, [loadVideos, videos.length, loading]);
+    }, [loadVideos]);
 
     const { prefetchRef, loadMoreRef } = useInfiniteScroll({
         hasMore,
