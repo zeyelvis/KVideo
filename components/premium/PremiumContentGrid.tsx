@@ -108,11 +108,14 @@ export function PremiumContentGrid({
 
 function PremiumGridLoading() {
     return (
-        <div className="flex justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--accent-color)] border-t-transparent"></div>
-                <p className="text-sm text-[var(--text-color-secondary)]">加载中...</p>
-            </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 py-4">
+            {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                    <div className="aspect-[2/3] rounded-xl bg-[var(--glass-bg)] mb-2" />
+                    <div className="h-4 w-3/4 bg-[var(--glass-bg)] rounded mb-1" />
+                    <div className="h-3 w-1/2 bg-[var(--glass-bg)] rounded" />
+                </div>
+            ))}
         </div>
     );
 }

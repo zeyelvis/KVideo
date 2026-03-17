@@ -1,19 +1,97 @@
 import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
-// We still import this type but won't rely on the empty array
 import { PREMIUM_SOURCES } from '@/lib/api/premium-sources';
+
+// ==================== 内存缓存 ====================
+const CACHE_TTL = 30 * 60 * 1000; // 30 分钟
+const cache = new Map<string, { data: any[]; timestamp: number }>();
+
+function getCached(key: string): any[] | null {
+    const entry = cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.timestamp > CACHE_TTL) {
+        cache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function setCache(key: string, data: any[]): void {
+    // 限制缓存大小（最多 100 个 key）
+    if (cache.size > 100) {
+        const oldest = cache.keys().next().value;
+        if (oldest) cache.delete(oldest);
+    }
+    cache.set(key, { data, timestamp: Date.now() });
+}
+
+// ==================== 工具函数 ====================
 
 /**
  * 构建正确的采集站 API URL
- * baseUrl 可能只是域名（如 https://hsckzy888.com），
- * 需要拼接 searchPath（如 /api.php/provide/vod）才能形成完整的 API 端点
  */
 function buildSourceUrl(source: any): URL {
     const base = source.baseUrl.replace(/\/$/, '');
     const path = source.searchPath || source.detailPath || '';
     return new URL(base + path);
 }
+
+/**
+ * 从单个源获取数据
+ */
+async function fetchFromSource(source: any, params: Record<string, string>): Promise<any[]> {
+    try {
+        const url = buildSourceUrl(source);
+        for (const [k, v] of Object.entries(params)) {
+            url.searchParams.set(k, v);
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 秒超时
+
+        const response = await fetch(url.toString(), {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+            },
+            next: { revalidate: 1800 },
+        });
+
+        clearTimeout(timeoutId);
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return (data.list || []).map((item: any) => ({
+            vod_id: item.vod_id,
+            vod_name: item.vod_name,
+            vod_pic: item.vod_pic,
+            vod_remarks: item.vod_remarks,
+            type_name: item.type_name,
+            source: source.id,
+        }));
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * 交错合并多源结果
+ */
+function interleaveResults(results: any[][]): any[] {
+    const interleaved: any[] = [];
+    const maxLen = Math.max(...results.map(r => r.length), 0);
+    for (let i = 0; i < maxLen; i++) {
+        for (let j = 0; j < results.length; j++) {
+            if (results[j][i]) {
+                interleaved.push(results[j][i]);
+            }
+        }
+    }
+    return interleaved;
+}
+
+// ==================== 核心处理 ====================
 
 async function handleCategoryRequest(
     sourceList: any[],
@@ -25,74 +103,63 @@ async function handleCategoryRequest(
         const enabledSources = sourceList.filter(s => s.enabled !== false);
 
         if (enabledSources.length === 0) {
-            return NextResponse.json({ videos: [], error: 'No enabled sources provided or found' }, { status: 500 });
+            return NextResponse.json({ videos: [], error: 'No enabled sources' }, { status: 500 });
         }
 
-        // 判断是分类模式还是关键词搜索模式
-        // 分类模式：categoryParam 包含 ":" (如 "source1:3,source2:5")
-        // 关键词搜索模式：categoryParam 是纯文本（如 "伦理"）
+        // 缓存 key
+        const sourceIds = enabledSources.map(s => s.id).sort().join(',');
+        const cacheKey = `${categoryParam || '_all_'}:${page}:${sourceIds}`;
+
+        // 检查缓存
+        const cached = getCached(cacheKey);
+        if (cached) {
+            return NextResponse.json({ videos: cached, fromCache: true });
+        }
+
         const isKeywordSearch = categoryParam && !categoryParam.includes(':');
 
         if (isKeywordSearch) {
-            // 关键词搜索模式 — 向所有启用的源搜索
-            const fetchPromises = enabledSources.map(async (source: any) => {
-                try {
-                    const url = buildSourceUrl(source);
-                    url.searchParams.set('ac', 'detail');
-                    url.searchParams.set('wd', categoryParam);
-                    url.searchParams.set('pg', page.toString());
+            // ========== 关键词搜索模式 ==========
+            // 分批：前 5 个优先源 + 剩余源并行
+            const prioritySources = enabledSources.slice(0, 5);
+            const restSources = enabledSources.slice(5);
 
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const params = { ac: 'detail', wd: categoryParam, pg: page.toString() };
 
-                    const response = await fetch(url.toString(), {
-                        signal: controller.signal,
-                        headers: {
-                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-                        },
-                        next: { revalidate: 1800 },
-                    });
+            // 第 1 批：优先源
+            const priorityResults = await Promise.all(
+                prioritySources.map(s => fetchFromSource(s, params))
+            );
 
-                    clearTimeout(timeoutId);
-                    if (!response.ok) return [];
+            // 第 2 批：剩余源（与第 1 批并行开始但不等待）
+            const restPromise = restSources.length > 0
+                ? Promise.all(restSources.map(s => fetchFromSource(s, params)))
+                : Promise.resolve([]);
 
-                    const data = await response.json();
-                    return (data.list || []).map((item: any) => ({
-                        vod_id: item.vod_id,
-                        vod_name: item.vod_name,
-                        vod_pic: item.vod_pic,
-                        vod_remarks: item.vod_remarks,
-                        type_name: item.type_name,
-                        source: source.id,
-                    }));
-                } catch (error) {
-                    console.error(`Failed to search from ${source.name}:`, error);
-                    return [];
-                }
-            });
+            // 先用优先源结果
+            let allResults = [...priorityResults];
 
-            const results = await Promise.all(fetchPromises);
-
-            // 交错合并结果
-            const interleavedVideos: any[] = [];
-            const maxLen = Math.max(...results.map(r => r.length), 0);
-            for (let i = 0; i < maxLen; i++) {
-                for (let j = 0; j < results.length; j++) {
-                    if (results[j][i]) {
-                        interleavedVideos.push(results[j][i]);
-                    }
-                }
+            // 等待剩余源（最多再等 3 秒）
+            try {
+                const restResults = await Promise.race([
+                    restPromise,
+                    new Promise<any[][]>((resolve) => setTimeout(() => resolve([]), 3000))
+                ]);
+                allResults = [...allResults, ...restResults];
+            } catch {
+                // 剩余源超时，只用优先源结果
             }
 
-            return NextResponse.json({ videos: interleavedVideos });
+            const videos = interleaveResults(allResults);
+            setCache(cacheKey, videos);
+            return NextResponse.json({ videos });
         }
 
-        // 分类模式 — 原有逻辑
-        const sourceMap = new Map<string, string>(); // sourceId -> typeId
+        // ========== 分类模式 ==========
+        const sourceMap = new Map<string, string>();
 
         if (categoryParam) {
-            const parts = categoryParam.split(',');
-            parts.forEach(part => {
+            categoryParam.split(',').forEach(part => {
                 if (part.includes(':')) {
                     const [sId, tId] = part.split(':');
                     sourceMap.set(sId, tId);
@@ -100,71 +167,51 @@ async function handleCategoryRequest(
             });
         }
 
-        let targetSources = [];
-        if (sourceMap.size > 0) {
-            targetSources = enabledSources.filter(s => sourceMap.has(s.id));
-        } else {
-            targetSources = enabledSources;
-        }
+        let targetSources = sourceMap.size > 0
+            ? enabledSources.filter(s => sourceMap.has(s.id))
+            : enabledSources;
 
         if (targetSources.length === 0) {
-            return NextResponse.json({ videos: [], error: 'No matching sources found' }, { status: 500 });
+            return NextResponse.json({ videos: [], error: 'No matching sources' }, { status: 500 });
         }
 
-        const fetchPromises = targetSources.map(async (source: any) => {
-            try {
-                const url = buildSourceUrl(source);
-                url.searchParams.set('ac', 'detail');
-                url.searchParams.set('pg', page.toString());
+        // 分批请求
+        const prioritySources = targetSources.slice(0, 5);
+        const restSources = targetSources.slice(5);
 
-                if (sourceMap.has(source.id)) {
-                    url.searchParams.set('t', sourceMap.get(source.id)!);
-                }
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-                const response = await fetch(url.toString(), {
-                    signal: controller.signal,
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-                    },
-                    next: { revalidate: 1800 },
-                });
-
-                clearTimeout(timeoutId);
-
-                if (!response.ok) return [];
-
-                const data = await response.json();
-                return (data.list || []).map((item: any) => ({
-                    vod_id: item.vod_id,
-                    vod_name: item.vod_name,
-                    vod_pic: item.vod_pic,
-                    vod_remarks: item.vod_remarks,
-                    type_name: item.type_name,
-                    source: source.id,
-                }));
-            } catch (error) {
-                console.error(`Failed to fetch from ${source.name}:`, error);
-                return [];
+        const buildParams = (source: any) => {
+            const p: Record<string, string> = { ac: 'detail', pg: page.toString() };
+            if (sourceMap.has(source.id)) {
+                p.t = sourceMap.get(source.id)!;
             }
-        });
+            return p;
+        };
 
-        const results = await Promise.all(fetchPromises);
+        // 第 1 批
+        const priorityResults = await Promise.all(
+            prioritySources.map(s => fetchFromSource(s, buildParams(s)))
+        );
 
-        const interleavedVideos: any[] = [];
-        const maxLen = Math.max(...results.map(r => r.length), 0);
+        // 第 2 批
+        const restPromise = restSources.length > 0
+            ? Promise.all(restSources.map(s => fetchFromSource(s, buildParams(s))))
+            : Promise.resolve([]);
 
-        for (let i = 0; i < maxLen; i++) {
-            for (let j = 0; j < results.length; j++) {
-                if (results[j][i]) {
-                    interleavedVideos.push(results[j][i]);
-                }
-            }
+        let allResults = [...priorityResults];
+
+        try {
+            const restResults = await Promise.race([
+                restPromise,
+                new Promise<any[][]>((resolve) => setTimeout(() => resolve([]), 3000))
+            ]);
+            allResults = [...allResults, ...restResults];
+        } catch {
+            // 超时
         }
 
-        return NextResponse.json({ videos: interleavedVideos });
+        const videos = interleaveResults(allResults);
+        setCache(cacheKey, videos);
+        return NextResponse.json({ videos });
 
     } catch (error) {
         console.error('Category content error:', error);
@@ -180,21 +227,18 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { sources, category, page, limit } = body;
 
-        // Use provided sources
         return await handleCategoryRequest(
             sources || [],
             category || '',
             parseInt(page || '1'),
             parseInt(limit || '20')
         );
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 }
 
 export async function GET(request: Request) {
-    // Legacy GET support - currently BROKEN since ADULT_SOURCES is empty
-    // But kept for structure. It will likely return 500 "No enabled sources"
     const { searchParams } = new URL(request.url);
     const categoryParam = searchParams.get('category') || '';
     const page = parseInt(searchParams.get('page') || '1');

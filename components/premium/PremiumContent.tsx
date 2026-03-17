@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { TagManager } from '@/components/home/TagManager';
 import { PremiumContentGrid } from './PremiumContentGrid';
+import { PremiumSlideshow } from './PremiumSlideshow';
 import { usePremiumTagManager } from '@/lib/hooks/usePremiumTagManager';
 import { usePremiumContent } from '@/lib/hooks/usePremiumContent';
 import { usePersonalizedRecommendations } from '@/components/home/hooks/usePersonalizedRecommendations';
@@ -85,7 +86,9 @@ export function PremiumContent({ onSearch }: PremiumContentProps) {
     }));
 
     return (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in">            {/* 幻灯片推荐 */}
+            <PremiumSlideshow onSearch={onSearch} />
+
             <TagManager
                 tags={tags}
                 selectedTag={effectiveRecommendSelected ? '' : selectedTag}
