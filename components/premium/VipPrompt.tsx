@@ -63,8 +63,10 @@ export function VipPrompt({ asModal = false, onClose, onOpenLogin }: VipPromptPr
 
     return (
         <div className={`relative ${asModal ? '' : 'min-h-[70vh]'} flex items-center justify-center`}>
-            {/* 背景渐变 */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#0f0c29] via-[#1a1040] to-[#0d1117] rounded-2xl overflow-hidden">
+            {/* 背景 — 完全不透明，避免弹窗穿透 */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden" style={{
+                background: 'linear-gradient(135deg, #0f0c29 0%, #1a1040 30%, #302b63 60%, #24243e 100%)',
+            }}>
                 {/* 装饰光斑 */}
                 <div className="absolute top-10 right-10 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px]" />
                 <div className="absolute bottom-10 left-10 w-48 h-48 bg-purple-500/10 rounded-full blur-[60px]" />

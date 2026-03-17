@@ -132,7 +132,26 @@ export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
         );
     }
 
-    if (currentData.length === 0) return null;
+    if (currentData.length === 0) {
+        // 数据还未到达——显示骨架屏而非隐藏
+        return (
+            <div className="mb-3">
+                <div className="hidden sm:flex gap-3 h-[260px]">
+                    <div className="w-[38%] bg-[var(--glass-bg)] rounded-2xl animate-pulse" />
+                    <div className="flex-1 flex gap-3 overflow-hidden">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="w-[130px] shrink-0 bg-[var(--glass-bg)] rounded-xl animate-pulse" />
+                        ))}
+                    </div>
+                </div>
+                <div className="sm:hidden flex gap-3 overflow-hidden h-[220px]">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="w-[140px] shrink-0 bg-[var(--glass-bg)] rounded-xl animate-pulse" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     const active = currentData[activeIndex] || currentData[0];
     const activeBackdrop = backdrops[active.title];
