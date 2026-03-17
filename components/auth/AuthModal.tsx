@@ -5,7 +5,7 @@
  */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, Lock, Gift, Eye, EyeOff, Loader2, Crown, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/user-store';
@@ -114,7 +114,31 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
     const [passwordTouched, setPasswordTouched] = useState(false);
     const [confirmTouched, setConfirmTouched] = useState(false);
 
+    // 防抖定时器
+    const emailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const passwordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const formRef = useRef<HTMLDivElement>(null);
+
     const { login, register, loading } = useUserStore();
+
+    // 移动端键盘弹出时调整视口
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleResize = () => {
+            // iOS Safari 键盘弹出会改变 visualViewport
+            if (formRef.current && window.visualViewport) {
+                const vh = window.visualViewport.height;
+                formRef.current.style.maxHeight = `${vh - 20}px`;
+            }
+        };
+        window.visualViewport?.addEventListener('resize', handleResize);
+        // 禁止背景滚动
+        document.body.style.overflow = 'hidden';
+        return () => {
+            window.visualViewport?.removeEventListener('resize', handleResize);
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
 
     // 从 URL 或 localStorage 读取邀请码
     useEffect(() => {
@@ -150,9 +174,13 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
         // 自动去除空格并转小写
         const cleaned = value.replace(/\s/g, '').toLowerCase();
         setEmail(cleaned);
+        // 防抖校验：300ms 后才触发，避免每次按键卡顿
+        if (emailTimerRef.current) clearTimeout(emailTimerRef.current);
         if (emailTouched && cleaned) {
-            const result = validateEmail(cleaned);
-            setEmailError(result.valid ? '' : (result.error || ''));
+            emailTimerRef.current = setTimeout(() => {
+                const result = validateEmail(cleaned);
+                setEmailError(result.valid ? '' : (result.error || ''));
+            }, 300);
         } else if (!cleaned) {
             setEmailError('');
         }
@@ -168,21 +196,25 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
 
     const handlePasswordChange = useCallback((value: string) => {
         setPassword(value);
-        // 实时强度计算
-        setPasswordStrength(getPasswordStrength(value));
-        // 注册模式下实时校验
-        if (tab === 'register' && passwordTouched && value) {
-            const result = validatePassword(value);
-            setPasswordError(result.valid ? '' : (result.error || ''));
-        } else if (!value) {
-            setPasswordError('');
-        }
-        // 确认密码同步校验
-        if (confirmTouched && confirmPassword && value !== confirmPassword) {
-            setConfirmError('两次密码不一致');
-        } else if (confirmPassword && value === confirmPassword) {
-            setConfirmError('');
-        }
+        // 防抖校验：先立即更新值，延迟校验
+        if (passwordTimerRef.current) clearTimeout(passwordTimerRef.current);
+        passwordTimerRef.current = setTimeout(() => {
+            // 强度计算
+            setPasswordStrength(getPasswordStrength(value));
+            // 注册模式下校验
+            if (tab === 'register' && passwordTouched && value) {
+                const result = validatePassword(value);
+                setPasswordError(result.valid ? '' : (result.error || ''));
+            } else if (!value) {
+                setPasswordError('');
+            }
+            // 确认密码同步校验
+            if (confirmTouched && confirmPassword && value !== confirmPassword) {
+                setConfirmError('两次密码不一致');
+            } else if (confirmPassword && value === confirmPassword) {
+                setConfirmError('');
+            }
+        }, 200);
     }, [tab, passwordTouched, confirmTouched, confirmPassword]);
 
     const handlePasswordBlur = useCallback(() => {
@@ -297,13 +329,13 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
     const isRegister = tab === 'register';
 
     return createPortal(
-        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-9999 flex items-end sm:items-center justify-center sm:p-4">
             {/* 背景遮罩 */}
             <div className="fixed inset-0 bg-black/70" onClick={onClose} />
 
-            {/* 弹窗主体 */}
-            <div className="relative w-full max-w-[820px] flex rounded-2xl overflow-hidden shadow-2xl"
-                style={{ maxHeight: '90vh' }}>
+            {/* 弹窗主体 - 手机端从底部弹出 */}
+            <div ref={formRef} className="relative w-full sm:max-w-[820px] flex rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl"
+                style={{ maxHeight: '92vh' }}>
 
                 {/* ===== 左侧宣传区 ===== */}
                 <div className="hidden md:flex w-[340px] shrink-0 flex-col justify-between relative overflow-hidden"
@@ -360,7 +392,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
                 </div>
 
                 {/* ===== 右侧表单区 ===== */}
-                <div className="flex-1 bg-[#1a1a2e] flex flex-col overflow-y-auto" style={{ maxHeight: '90vh', willChange: 'transform' }}>
+                <div className="flex-1 bg-[#1a1a2e] flex flex-col overflow-y-auto" style={{ maxHeight: '92vh', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}>
                     <button
                         onClick={onClose}
                         className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all cursor-pointer z-10"
@@ -400,9 +432,13 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
                         </button>
                     </div>
 
-                    {/* 表单 */}
+                    {/* 表单 - autoComplete off 阻止浏览器密码管理器 */}
                     <form onSubmit={tab === 'login' ? handleLogin : handleRegister}
-                        className="flex-1 flex flex-col px-6 md:px-10 pt-6 pb-6">
+                        autoComplete="off"
+                        className="flex-1 flex flex-col px-6 md:px-10 pt-6 pb-6 pb-safe">
+                        {/* 隐藏的 honeypot 字段，欺骗浏览器密码管理器 */}
+                        <input type="text" name="username" autoComplete="username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+                        <input type="password" name="pass" autoComplete="current-password" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
                         <div className="flex-1 space-y-3 min-h-[260px]">
 
                             {/* 邮箱 */}
@@ -411,15 +447,19 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
                                     <Mail size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${emailError ? 'text-red-400' : 'text-white/30 group-focus-within:text-emerald-400'}`} />
                                     <input
                                         type="email"
+                                        inputMode="email"
+                                        enterKeyHint="next"
                                         placeholder="请输入邮箱地址"
                                         value={email}
                                         onChange={(e) => handleEmailChange(e.target.value)}
                                         onBlur={handleEmailBlur}
-                                        className={`w-full pl-11 pr-4 py-3.5 bg-white/5 border rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none transition-all ${emailError ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-emerald-400/50 focus:bg-white/8'}`}
-                                        autoComplete="email"
+                                        className={`w-full pl-11 pr-4 py-3.5 bg-white/5 border rounded-xl text-base text-white placeholder:text-white/25 focus:outline-none transition-colors ${emailError ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-emerald-400/50 focus:bg-white/8'}`}
+                                        autoComplete="off"
                                         autoCorrect="off"
                                         autoCapitalize="off"
                                         spellCheck={false}
+                                        data-lpignore="true"
+                                        data-1p-ignore="true"
                                     />
                                     {/* 邮箱校验状态图标 */}
                                     {emailTouched && email && (
@@ -443,15 +483,18 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
                                     <Lock size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${passwordError ? 'text-red-400' : 'text-white/30 group-focus-within:text-emerald-400'}`} />
                                     <input
                                         type={showPassword ? 'text' : 'password'}
+                                        enterKeyHint={isRegister ? 'next' : 'done'}
                                         placeholder={isRegister ? '设置密码（至少 8 位，含大小写和数字）' : '请输入密码'}
                                         value={password}
                                         onChange={(e) => handlePasswordChange(e.target.value)}
                                         onBlur={handlePasswordBlur}
-                                        className={`w-full pl-11 pr-11 py-3.5 bg-white/5 border rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none transition-all ${passwordError ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-emerald-400/50 focus:bg-white/8'}`}
-                                        autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+                                        className={`w-full pl-11 pr-11 py-3.5 bg-white/5 border rounded-xl text-base text-white placeholder:text-white/25 focus:outline-none transition-colors ${passwordError ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-emerald-400/50 focus:bg-white/8'}`}
+                                        autoComplete="off"
                                         autoCorrect="off"
                                         autoCapitalize="off"
                                         spellCheck={false}
+                                        data-lpignore="true"
+                                        data-1p-ignore="true"
                                     />
                                     <button
                                         type="button"
@@ -496,14 +539,17 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
                                         <Lock size={16} className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${confirmError ? 'text-red-400' : 'text-white/30 group-focus-within:text-emerald-400'}`} />
                                         <input
                                             type={showPassword ? 'text' : 'password'}
+                                            enterKeyHint="next"
                                             placeholder="请再次输入密码"
                                             value={confirmPassword}
                                             onChange={(e) => handleConfirmChange(e.target.value)}
-                                            className={`w-full pl-11 pr-4 py-3.5 bg-white/5 border rounded-xl text-sm text-white placeholder:text-white/25 focus:outline-none transition-all ${confirmError ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-emerald-400/50 focus:bg-white/8'}`}
-                                            autoComplete="new-password"
+                                            className={`w-full pl-11 pr-4 py-3.5 bg-white/5 border rounded-xl text-base text-white placeholder:text-white/25 focus:outline-none transition-colors ${confirmError ? 'border-red-500/50 focus:border-red-500/70' : 'border-white/10 focus:border-emerald-400/50 focus:bg-white/8'}`}
+                                            autoComplete="off"
                                             autoCorrect="off"
                                             autoCapitalize="off"
                                             spellCheck={false}
+                                            data-lpignore="true"
+                                            data-1p-ignore="true"
                                         />
                                         {/* 匹配状态图标 */}
                                         {confirmTouched && confirmPassword && (

@@ -22,6 +22,17 @@ select,
 
 html {
     scroll-behavior: auto;
+    /* 防止 iOS Safari 下拉刷新后水平偏移 */
+    overflow-x: clip;
+}
+
+body {
+    overflow-x: clip;
+    /* 仅允许垂直方向弹性回弹，阻止水平方向 */
+    overscroll-behavior-x: none;
+    /* 确保宽度不超过视口 */
+    width: 100%;
+    max-width: 100vw;
 }
 
 /* Focus Styles */
