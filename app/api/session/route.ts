@@ -20,6 +20,13 @@ function getServiceClient() {
     return createClient(url, key);
 }
 
+// 用 anon key 创建客户端来验证用户 JWT
+function getAnonClient() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    return createClient(url, key);
+}
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -31,6 +38,22 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // HIGH-3 修复：验证 JWT 身份与 userId 一致
+        const authHeader = request.headers.get('authorization');
+        const token = authHeader?.replace('Bearer ', '');
+        if (token) {
+            // 如果提供了 token，验证身份
+            const anonClient = getAnonClient();
+            const { data: { user: authUser }, error } = await anonClient.auth.getUser(token);
+            if (error || !authUser || authUser.id !== userId) {
+                return NextResponse.json(
+                    { success: false, error: '身份验证失败' },
+                    { status: 403 }
+                );
+            }
+        }
+        // 注意：sendBeacon 无法设置自定义 header，logout 时允许无 token（降级处理）
 
         const supabase = getServiceClient();
         const ip = request.headers.get('cf-connecting-ip') ||

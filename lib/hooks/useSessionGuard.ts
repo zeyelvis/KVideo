@@ -49,9 +49,19 @@ function getDeviceName(): string {
 /** 会话 API 调用 */
 async function sessionApi(action: string, userId: string, deviceId: string) {
     try {
+        // 获取 Supabase access token 用于身份验证
+        const { supabase } = await import('@/lib/supabase/client');
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+        };
+        if (session?.access_token) {
+            headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+
         const res = await fetch('/api/session', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({
                 action,
                 userId,
