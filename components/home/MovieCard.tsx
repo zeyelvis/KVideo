@@ -25,6 +25,7 @@ interface MovieCardProps {
 export const MovieCard = memo(function MovieCard({ movie, onMovieClick }: MovieCardProps) {
   const [imageError, setImageError] = useState(false);
   const [fallbackError, setFallbackError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <Link
@@ -48,16 +49,21 @@ export const MovieCard = memo(function MovieCard({ movie, onMovieClick }: MovieC
     >
       <Card hover={false} className="p-0 h-full shadow-[0_2px_8px_var(--shadow-color)] group-hover:shadow-[0_12px_32px_var(--shadow-color)] transition-all duration-300 ease-out" blur={false}>
         <div className="relative aspect-[2/3] bg-[var(--glass-bg)] rounded-[var(--radius-2xl)] overflow-hidden">
+          {/* 骨架屏 shimmer 底层 */}
+          {!imageLoaded && !imageError && (
+            <div className="absolute inset-0 skeleton-shimmer rounded-[var(--radius-2xl)]" />
+          )}
           {!imageError ? (
             <Image
               src={movie.cover}
               alt={movie.title}
               fill
-              className="object-cover transition-transform duration-500 group-hover:scale-110 rounded-[var(--radius-2xl)]"
+              className={`object-cover transition-transform duration-500 group-hover:scale-110 rounded-[var(--radius-2xl)] ${imageLoaded ? 'img-fade-in' : 'opacity-0'}`}
               sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
               loading="eager"
               unoptimized
               referrerPolicy="no-referrer"
+              onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
             />
           ) : !fallbackError ? (

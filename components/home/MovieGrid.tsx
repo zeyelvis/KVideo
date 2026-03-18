@@ -132,11 +132,10 @@ export function MovieGrid({
 
 function MovieGridLoading() {
   return (
-    <div className="flex justify-center py-20">
-      <div className="flex flex-col items-center gap-3">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--accent-color)] border-t-transparent"></div>
-        <p className="text-sm text-[var(--text-color-secondary)]">加载中...</p>
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+      {[...Array(10)].map((_, i) => (
+        <div key={i} className="skeleton-card skeleton-shimmer" style={{ animationDelay: `${i * 0.08}s` }} />
+      ))}
     </div>
   );
 }

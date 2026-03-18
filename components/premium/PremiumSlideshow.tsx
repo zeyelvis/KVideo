@@ -136,10 +136,10 @@ export function PremiumSlideshow({ onSearch }: PremiumSlideshowProps) {
     if (loading) {
         return (
             <div className="relative w-full aspect-[21/9] md:aspect-[3/1] rounded-[var(--radius-2xl)] overflow-hidden mb-8">
-                <div className="absolute inset-0 bg-[var(--glass-bg)] animate-pulse" />
+                <div className="absolute inset-0 slideshow-skeleton skeleton-shimmer" />
                 <div className="absolute bottom-8 left-8 space-y-3">
-                    <div className="h-8 w-64 bg-white/10 rounded-lg animate-pulse" />
-                    <div className="h-5 w-40 bg-white/10 rounded-lg animate-pulse" />
+                    <div className="h-8 w-64 skeleton-shimmer rounded-lg" />
+                    <div className="h-5 w-40 skeleton-shimmer rounded-lg" style={{ animationDelay: '0.1s' }} />
                 </div>
             </div>
         );

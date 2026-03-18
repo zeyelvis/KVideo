@@ -81,7 +81,7 @@ export default function PremiumPage() {
     return (
         <Suspense fallback={
             <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-color)' }}>
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-[var(--accent-color)] border-t-transparent"></div>
+                <div className="brand-spinner" />
             </div>
         }>
             <VipGate>

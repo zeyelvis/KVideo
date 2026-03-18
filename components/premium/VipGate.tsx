@@ -28,7 +28,7 @@ export function VipGate({ children, fallback }: VipGateProps) {
     if (!initialized) {
         return fallback || (
             <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-color)' }}>
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-500 border-t-transparent" />
+                <div className="brand-spinner" />
             </div>
         );
     }

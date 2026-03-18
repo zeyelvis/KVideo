@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./styles/tmdb-slideshow.css";
+import "./styles/skeleton.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { TVProvider } from "@/lib/contexts/TVContext";
 import { TVNavigationInitializer } from "@/components/TVNavigationInitializer";
