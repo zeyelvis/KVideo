@@ -19,7 +19,7 @@ export function usePopularMovies(selectedTag: string, tags: any[], contentType: 
 
     // 解析标签值
     const resolveTagValue = useCallback((tag: string) => {
-        if (!tags.length) return '热门';
+        if (!tags.length) return '热门'; // tags 还没加载时用默认值
         const matched = tags.find((t: any) => t.id === tag) || tags.find((t: any) => t.value === tag);
         return matched?.value || '热门';
     }, [tags]);
@@ -54,8 +54,7 @@ export function usePopularMovies(selectedTag: string, tags: any[], contentType: 
 
     // 标签或类型变化时回到第 1 页
     useEffect(() => {
-        if (tags.length === 0) return;
-
+        // tags 未加载也发请求（用默认值 '热门'），避免卡住
         if (abortRef.current) abortRef.current.abort();
         const controller = new AbortController();
         abortRef.current = controller;
@@ -66,7 +65,7 @@ export function usePopularMovies(selectedTag: string, tags: any[], contentType: 
         loadPage(selectedTag, 0, controller.signal);
 
         return () => controller.abort();
-    }, [selectedTag, contentType, tags]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [selectedTag, contentType, tags.length]); // tags.length 变化时重新请求
 
     // 翻页
     const goToPage = useCallback((newPage: number) => {
