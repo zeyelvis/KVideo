@@ -80,8 +80,17 @@ export function TagList({
         if (!container) return;
 
         const handleWheel = (e: WheelEvent) => {
-            // Check if it's a vertical scroll (mostly deltaY) and negligible horizontal scroll
+            // 只在标签区域确实有横向溢出内容时才拦截
+            const hasHorizontalOverflow = container.scrollWidth > container.clientWidth + 1;
+            if (!hasHorizontalOverflow) return; // 没有横向滚动需求，让页面正常纵向滚动
+
+            // 只拦截纵向滚动（转为横向），横向滚动保持默认
             if (e.deltaY !== 0 && Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+                // 检查是否已经滚到边界——到边界时不拦截，让页面继续滚
+                const atLeftEdge = container.scrollLeft <= 0 && e.deltaY < 0;
+                const atRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1 && e.deltaY > 0;
+                if (atLeftEdge || atRightEdge) return;
+
                 e.preventDefault();
                 container.scrollLeft += e.deltaY;
             }
