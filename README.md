@@ -1,12 +1,12 @@
 [![Upstream Sync](https://github.com/sky06walker/KVideo/actions/workflows/Github_Upstream_Sync.yml/badge.svg)](https://github.com/sky06walker/KVideo/actions/workflows/Github_Upstream_Sync.yml)
 
-# 视频聚合平台 (KVideo)
+# 视频聚合平台 (ikanpp)
 
 ![KVideo Banner](public/icon.png)
 
 > 一个基于 Next.js 16 构建的现代化视频聚合播放平台。采用独特的 "Liquid Glass" 设计语言，提供流畅的视觉体验和强大的视频搜索功能。
 
-**在线体验：[https://kvideo.pages.dev/](https://kvideo.pages.dev/)**
+**在线体验：[https://www.ikanpp.com/](https://www.ikanpp.com/)**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-blue?style=for-the-badge&logo=react)](https://react.dev/)
