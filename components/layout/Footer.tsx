@@ -60,6 +60,7 @@ export function Footer() {
                             <nav className="grid grid-cols-2 gap-x-6 gap-y-2.5">
                                 {[
                                     { label: '首页', href: '/' },
+                                    { label: '关于我们', href: '/about' },
                                     { label: '客户端', href: '/download' },
                                     { label: '直播', href: '/iptv' },
                                     { label: '个人中心', href: '/profile' },
@@ -135,6 +136,8 @@ export function Footer() {
                             <Link href="/terms" className="hover:opacity-100 transition-opacity">用户协议</Link>
                             <span>·</span>
                             <Link href="/privacy" className="hover:opacity-100 transition-opacity">隐私条款</Link>
+                            <span>·</span>
+                            <Link href="/about" className="hover:opacity-100 transition-opacity">关于我们</Link>
                             <span>·</span>
                             <span>本站内容仅供学习交流</span>
                         </div>
