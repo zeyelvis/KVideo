@@ -29,10 +29,24 @@ export function usePopularMovies(selectedTag: string, tags: any[], contentType: 
         setLoading(true);
         try {
             const tagValue = resolveTagValue(tag);
+
+            // 创建超时控制器 (12 秒)
+            const timeoutController = new AbortController();
+            const timer = setTimeout(() => timeoutController.abort(), 12000);
+
+            // 合并外部 signal 和超时 signal
+            const combinedSignal = signal
+                ? (AbortSignal as any).any
+                    ? (AbortSignal as any).any([signal, timeoutController.signal])
+                    : timeoutController.signal  // 降级：只用超时信号
+                : timeoutController.signal;
+
             const response = await fetch(
                 `/api/douban/recommend?type=${contentType}&tag=${encodeURIComponent(tagValue)}&page_limit=${PAGE_SIZE}&page_start=${pageNum * PAGE_SIZE}`,
-                { signal }
+                { signal: combinedSignal }
             );
+
+            clearTimeout(timer);
 
             if (!response.ok) throw new Error('Failed to fetch');
 
@@ -44,7 +58,7 @@ export function usePopularMovies(selectedTag: string, tags: any[], contentType: 
                 setHasMore(newMovies.length === PAGE_SIZE);
                 setLoading(false);
             }
-        } catch (error) {
+        } catch (error: any) {
             if (signal?.aborted) return;
             console.error('加载失败:', error);
             setHasMore(false);

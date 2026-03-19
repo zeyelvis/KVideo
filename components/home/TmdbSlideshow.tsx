@@ -19,7 +19,7 @@ interface HeroSlideshowProps {
 
 export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
     const router = useRouter();
-    const { movieRanking, tvRanking, loading, fetchType, enrichMovie } = useRankingData({ limit: 10 });
+    const { movieRanking, tvRanking, loading, error, fetchType, enrichMovie, retry } = useRankingData({ limit: 10 });
     const [activeIndex, setActiveIndex] = useState(0);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -120,6 +120,25 @@ export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
         if (movie.year) params.set('year', movie.year);
         router.push(`/player?${params.toString()}`);
     };
+
+    // 加载失败 — 显示错误信息和重试按钮
+    if (!loading && error && currentData.length === 0) {
+        return (
+            <div className="mb-3">
+                <div className="flex flex-col items-center justify-center h-[280px] sm:h-[280px] rounded-2xl"
+                     style={{ background: 'var(--glass-bg, rgba(255,255,255,0.04))', border: '1px solid var(--glass-border, rgba(255,255,255,0.06))' }}>
+                    <p className="text-sm mb-3" style={{ color: 'var(--text-color-secondary)' }}>{error}</p>
+                    <button
+                        onClick={retry}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:scale-105"
+                        style={{ background: 'var(--accent-color)' }}
+                    >
+                        重新加载
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // 骨架屏 — 尺寸与实际内容完全一致
     if (loading || currentData.length === 0) {
