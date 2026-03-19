@@ -64,7 +64,11 @@ export function useRankingData({ limit = 10 }: UseRankingDataOptions = {}) {
         if (fetchedRef.current) return;
         fetchedRef.current = true;
 
-        setLoading(true);
+        // 只在首次加载（两种类型都还没数据）时才显示全局 loading
+        // 切换 tab 时另一种数据已有，不闪骨架屏
+        const isInitialLoad = movieRanking.length === 0 && tvRanking.length === 0;
+        if (isInitialLoad) setLoading(true);
+
         try {
             const res = await fetch(
                 `/api/douban/recommend?type=${type}&tag=${encodeURIComponent('热门')}&page_limit=${limit}&page_start=0`
@@ -82,9 +86,9 @@ export function useRankingData({ limit = 10 }: UseRankingDataOptions = {}) {
         } catch (error) {
             console.error(`获取${type}排行榜失败:`, error);
         } finally {
-            setLoading(false);
+            if (isInitialLoad) setLoading(false);
         }
-    }, [limit]);
+    }, [limit, movieRanking.length, tvRanking.length]);
 
     /**
      * 按需加载某部影片的详情并更新排行榜数据。

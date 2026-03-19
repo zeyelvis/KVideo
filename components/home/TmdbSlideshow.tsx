@@ -121,33 +121,12 @@ export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
         router.push(`/player?${params.toString()}`);
     };
 
-    // 骨架屏
-    if (loading) {
+    // 骨架屏 — 尺寸与实际内容完全一致
+    if (loading || currentData.length === 0) {
         return (
             <div className="mb-3">
-                <div className="hidden sm:flex gap-3 h-[260px]">
-                    <div className="w-[38%] slideshow-skeleton skeleton-shimmer rounded-2xl" />
-                    <div className="flex-1 flex gap-3 overflow-hidden">
-                        {[...Array(5)].map((_, i) => (
-                            <div key={i} className="w-[130px] shrink-0 skeleton-shimmer rounded-xl" style={{ animationDelay: `${i * 0.1}s` }} />
-                        ))}
-                    </div>
-                </div>
-                <div className="sm:hidden flex gap-3 overflow-hidden h-[220px]">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="w-[140px] shrink-0 skeleton-shimmer rounded-xl" style={{ animationDelay: `${i * 0.1}s` }} />
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    if (currentData.length === 0) {
-        // 数据还未到达——显示骨架屏而非隐藏
-        return (
-            <div className="mb-3">
-                <div className="hidden sm:flex gap-3 h-[260px]">
-                    <div className="w-[38%] slideshow-skeleton skeleton-shimmer rounded-2xl" />
+                <div className="hidden sm:flex gap-3 h-[280px]">
+                    <div className="w-[42%] min-w-[320px] slideshow-skeleton skeleton-shimmer rounded-2xl" />
                     <div className="flex-1 flex gap-3 overflow-hidden">
                         {[...Array(5)].map((_, i) => (
                             <div key={i} className="w-[130px] shrink-0 skeleton-shimmer rounded-xl" style={{ animationDelay: `${i * 0.1}s` }} />
