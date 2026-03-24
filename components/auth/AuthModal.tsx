@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Mail, Lock, Gift, Eye, EyeOff, Loader2, Crown, Sparkles, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useUserStore } from '@/lib/store/user-store';
-import { Turnstile } from '@/components/auth/Turnstile';
+import { Turnstile, isTurnstileEnabled, type TurnstileHandle } from '@/components/auth/Turnstile';
 
 // ─── 安全常量 ────────────────────────────────
 
@@ -174,6 +174,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
     const confirmRef = useRef<HTMLInputElement>(null);
     const referralRef = useRef<HTMLInputElement>(null);
     const turnstileTokenRef = useRef('');
+    const turnstileRef = useRef<TurnstileHandle>(null);
     const formContainerRef = useRef<HTMLDivElement>(null);
 
     const { login, register, loading } = useUserStore();
@@ -266,8 +267,11 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
     }, []);
 
     const verifyTurnstile = async (): Promise<boolean> => {
+        // 未启用 Turnstile（密钥为空）→ 直接通过
+        if (!isTurnstileEnabled) return true;
+
         if (!turnstileTokenRef.current) {
-            setError('请完成人机验证');
+            setError('请先完成人机验证（点击勾选框）');
             return false;
         }
         try {
@@ -278,13 +282,16 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
             });
             const data = await res.json();
             if (!data.success) {
-                setError(data.error || '人机验证失败，请重试');
+                setError(data.error || '人机验证失败，请重新验证');
                 turnstileTokenRef.current = '';
+                turnstileRef.current?.reset();
                 return false;
             }
             return true;
         } catch {
             setError('验证服务异常，请稍后重试');
+            turnstileTokenRef.current = '';
+            turnstileRef.current?.reset();
             return false;
         }
     };
@@ -306,6 +313,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
             resetForm();
         } catch (err: any) {
             turnstileTokenRef.current = '';
+            turnstileRef.current?.reset();
             setError(err.message === 'Invalid login credentials' ? '邮箱或密码错误' : err.message || '登录失败');
         }
     };
@@ -344,6 +352,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
             }
         } catch (err: any) {
             turnstileTokenRef.current = '';
+            turnstileRef.current?.reset();
             if (err.message?.includes('already registered')) {
                 setError('该邮箱已注册，请直接登录');
             } else {
@@ -511,15 +520,18 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login' }: AuthModalPr
                                 </div>
                             )}
 
-                            {/* Turnstile */}
-                            <div className="flex justify-center">
-                                <Turnstile
-                                    onVerify={handleTurnstileVerify}
-                                    onExpire={handleTurnstileExpire}
-                                    onError={handleTurnstileExpire}
-                                    theme="dark"
-                                />
-                            </div>
+                            {/* Turnstile — 仅在配置了密钥时渲染 */}
+                            {isTurnstileEnabled && (
+                                <div className="flex justify-center">
+                                    <Turnstile
+                                        ref={turnstileRef}
+                                        onVerify={handleTurnstileVerify}
+                                        onExpire={handleTurnstileExpire}
+                                        onError={handleTurnstileExpire}
+                                        theme="dark"
+                                    />
+                                </div>
+                            )}
 
                             {/* 错误/成功 */}
                             {error && (
