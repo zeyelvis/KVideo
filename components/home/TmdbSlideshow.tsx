@@ -191,7 +191,7 @@ export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
                         ))}
                     </div>
                 </div>
-                <div className="sm:hidden flex gap-3 overflow-hidden h-[220px]">
+                <div className="mobile-only-section flex gap-3 overflow-hidden h-[220px]">
                     {[...Array(3)].map((_, i) => (
                         <div key={i} className="w-[140px] shrink-0 skeleton-shimmer rounded-xl" style={{ animationDelay: `${i * 0.1}s` }} />
                     ))}
@@ -435,8 +435,8 @@ export function HeroSlideshow({ contentType, onSearch }: HeroSlideshowProps) {
                 </div>
             </div>
 
-            {/* === 手机端：紧凑横向滚动 === */}
-            <div className="block sm:!hidden">
+            {/* === 手机端：紧凑横向滚动（桌面端隐藏）=== */}
+            <div className="mobile-only-section">
                 <div className="flex items-center justify-between mb-2 px-1">
                     <span className="text-sm font-semibold text-[var(--text-color)]">
                         🔥 {contentType === 'movie' ? '电影' : '电视剧'}热门榜

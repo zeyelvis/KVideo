@@ -2,6 +2,16 @@
    骨架屏 & 加载过渡动画系统
    ================================================ */
 
+/* 仅手机端显示，桌面端强制隐藏（绕过 Tailwind sm:hidden 优先级问题） */
+.mobile-only-section {
+    display: block;
+}
+@media (min-width: 640px) {
+    .mobile-only-section {
+        display: none !important;
+    }
+}
+
 /* Shimmer 渐变扫光动画 — 替代 animate-pulse */
 @keyframes shimmer {
     0% { background-position: -200% 0; }
