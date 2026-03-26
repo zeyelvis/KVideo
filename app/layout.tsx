@@ -219,7 +219,7 @@ export default function RootLayout({
                   clearTimeout(scrollTimer);
                   scrollTimer = setTimeout(function() {
                     body.classList.remove('scrolling');
-                  }, 150);
+                  }, 300);
                 }
                 
                 let ticking = false;

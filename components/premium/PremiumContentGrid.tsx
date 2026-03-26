@@ -46,7 +46,8 @@ export function PremiumContentGrid({
                         style={{
                             position: 'relative',
                             zIndex: 1,
-                            contentVisibility: 'auto'
+                            contentVisibility: 'visible',
+                            contain: 'layout style paint'
                         }}
                         onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.zIndex = '100')}
                         onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget.style.zIndex = '1')}

@@ -44,7 +44,8 @@ export const MovieCard = memo(function MovieCard({ movie, onMovieClick, index = 
       style={{
         position: 'relative',
         zIndex: 1,
-        contentVisibility: 'auto'
+        contentVisibility: 'visible',
+        contain: 'layout style paint'
       }}
       onMouseEnter={(e) => (e.currentTarget.style.zIndex = '100')}
       onMouseLeave={(e) => (e.currentTarget.style.zIndex = '1')}

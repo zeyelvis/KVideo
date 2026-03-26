@@ -140,22 +140,19 @@ nav.fixed,
     contain-intrinsic-size: auto 400px;
 } */
 
-[class*="grid"]>a {
-    animation: fadeInUp 0.2s ease-out;
-}
+/* 网格卡片入场动画已移除 — 避免滚动回时重播导致闪烁 */
 
-@supports (content-visibility: auto) {
-    img {
-        content-visibility: auto;
-    }
-}
+/* 已移除 img 的 content-visibility: auto — iOS Safari 存在图片解码回收 Bug
+   导致滚动回时图片变黑/闪烁 */
 
 img {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
 }
 
-body.scrolling * {
+/* 滚动防抖：仅限制可交互元素，减少重绘范围 */
+body.scrolling button,
+body.scrolling a {
     pointer-events: none !important;
 }
 
