@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useIsTV } from '@/lib/contexts/TVContext';
 
 type DetectedPlatform = 'ios' | 'android' | 'macos' | null;
 
@@ -39,9 +40,13 @@ const platformAction: Record<string, string> = {
 };
 
 export function AppDownloadBanner() {
+    const isTV = useIsTV();
     const [platform, setPlatform] = useState<DetectedPlatform>(null);
     const [visible, setVisible] = useState(false);
     const [show, setShow] = useState(false);
+
+    // TV 模式下完全不显示下载提示
+    if (isTV) return null;
 
     useEffect(() => {
         // 累计访问次数

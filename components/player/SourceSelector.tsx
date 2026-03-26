@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Icons } from '@/components/ui/Icon';
 import { LatencyBadge } from '@/components/ui/LatencyBadge';
 import { Button } from '@/components/ui/Button';
+import { useIsTV } from '@/lib/contexts/TVContext';
 
 export interface SourceInfo {
     id: string | number;
@@ -36,6 +37,7 @@ export function SourceSelector({
 }: SourceSelectorProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [latencies, setLatencies] = useState<Record<string, number>>({});
+    const isTV = useIsTV();
 
     // Sort sources by latency
     const sortedSources = useMemo(() => {
@@ -95,7 +97,8 @@ export function SourceSelector({
         setLatencies(initial);
     }, [sources]);
 
-    if (sources.length <= 1) {
+    /* TV 模式下即使只有单源也显示资源信息 */
+    if (sources.length <= 1 && !isTV) {
         return null;
     }
 

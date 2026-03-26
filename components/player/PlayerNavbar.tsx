@@ -4,9 +4,11 @@ import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { Icons } from '@/components/ui/Icon';
 import { siteConfig } from '@/lib/config/site-config';
 import { LogoIcon } from '@/components/ui/LogoIcon';
+import { useIsTV } from '@/lib/contexts/TVContext';
 
 export function PlayerNavbar({ isPremium }: { isPremium?: boolean }) {
     const router = useRouter();
+    const isTV = useIsTV();
 
     return (
         <nav className="sticky top-0 z-50 pt-4 pb-2 px-4" style={{ transform: 'translateZ(0)' }}>
@@ -22,11 +24,12 @@ export function PlayerNavbar({ isPremium }: { isPremium?: boolean }) {
                         </button>
                         <button
                             onClick={() => router.back()}
-                            className="w-10 h-10 flex items-center justify-center rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
+                            className="flex items-center gap-1.5 px-3 h-10 rounded-[var(--radius-full)] bg-[var(--glass-bg)] border border-[var(--glass-border)] text-[var(--text-color)] hover:bg-[color-mix(in_srgb,var(--accent-color)_10%,transparent)] transition-all duration-200 cursor-pointer"
                             aria-label="返回"
                             title="返回"
                         >
                             <Icons.ChevronLeft size={20} />
+                            <span className={isTV ? 'inline text-base font-medium' : 'hidden md:inline text-sm'}>返回</span>
                         </button>
                     </div>
                     <div className="flex items-center gap-3">

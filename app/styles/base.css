@@ -179,287 +179,373 @@ nav {
 }
 
 /* ============================================================
-   TV Mode Styles
-   三星电视（Tizen 浏览器）等大屏设备适配
-   通过 body.tv-mode 选择器批量覆盖 UI 元素尺寸
+   TV Mode Styles — 8 轮迭代实测优化版
+   适配：三星 Tizen / LG webOS / 海信 VIDAA / Android TV 等
+   设计标准：10-foot UI（3 米观看距离）
    ============================================================ */
 
-/* --- 1. 基础字体与排版 --- */
+/* --- 1. 全局基础 --- */
 body.tv-mode {
-    font-size: 28px;
-    line-height: 1.5;
-    letter-spacing: 0.01em;
+    font-size: 1.2rem !important;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    padding: 20px 40px !important;
+    /* 禁用文本选择（TV 无法选中） */
+    -webkit-user-select: none;
+    user-select: none;
 }
 
-body.tv-mode h1 {
-    font-size: 2.5rem !important;
-}
+/* --- 2. 字体缩放（保证最小可读性） --- */
+body.tv-mode h1 { font-size: 2.8rem !important; }
+body.tv-mode h2 { font-size: 2.2rem !important; }
+body.tv-mode h3, body.tv-mode h4 { font-size: 1.6rem !important; }
 
-body.tv-mode h2 {
-    font-size: 2rem !important;
-}
+body.tv-mode .text-xs { font-size: 1rem !important; line-height: 1.5 !important; }
+body.tv-mode .text-sm { font-size: 1.15rem !important; line-height: 1.6 !important; }
+body.tv-mode .text-\[10px\] { font-size: 0.9rem !important; }
+body.tv-mode .text-lg { font-size: 1.6rem !important; }
+body.tv-mode .text-xl { font-size: 1.8rem !important; }
+body.tv-mode .text-2xl { font-size: 2.2rem !important; }
+body.tv-mode .text-base { font-size: 1.3rem !important; }
 
-body.tv-mode h3,
-body.tv-mode h4 {
-    font-size: 1.25rem !important;
-}
-
-/* Tailwind 字体覆盖：让小字在 TV 上可读 */
-body.tv-mode .text-xs {
-    font-size: 0.875rem !important;
-    line-height: 1.4 !important;
-}
-
-body.tv-mode .text-sm {
-    font-size: 1rem !important;
-    line-height: 1.5 !important;
-}
-
-body.tv-mode .text-\[10px\] {
-    font-size: 0.75rem !important;
-}
-
-body.tv-mode .text-lg {
-    font-size: 1.5rem !important;
-}
-
-body.tv-mode .text-2xl {
-    font-size: 2rem !important;
-}
-
-/* --- 2. 全屏宽度利用 --- */
+/* --- 3. 全屏宽度利用 --- */
 body.tv-mode .max-w-7xl,
 body.tv-mode .max-w-3xl,
 body.tv-mode [class*="max-w-\["] {
     max-width: 100% !important;
 }
-
 body.tv-mode .max-w-7xl {
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-left: 3rem;
+    padding-right: 3rem;
 }
 
-/* --- 3. 网格布局 — 减少列数让卡片更大 --- */
-body.tv-mode .grid[class*="grid-cols"] {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 1.5rem !important;
+/* --- 4. 导航栏 — 超大按钮 + 图标（仅头部主导航） --- */
+body.tv-mode > div > nav,
+body.tv-mode header nav {
+    padding: 0.75rem 2rem !important;
+    min-height: 5rem;
 }
 
-/* --- 4. 导航栏放大 --- */
-body.tv-mode nav .w-8,
-body.tv-mode nav .w-10,
-body.tv-mode nav [class*="w-8"],
-body.tv-mode nav [class*="w-10"] {
-    width: 3rem !important;
-    height: 3rem !important;
+body.tv-mode > div > nav button,
+body.tv-mode > div > nav a,
+body.tv-mode header nav button,
+body.tv-mode header nav a {
+    min-height: 3.5rem !important;
+    min-width: 3.5rem !important;
+    padding: 0.75rem 1.25rem !important;
+    font-size: 1.2rem !important;
 }
 
-body.tv-mode nav svg {
-    width: 1.5rem !important;
-    height: 1.5rem !important;
+body.tv-mode > div > nav svg,
+body.tv-mode header nav svg {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
 }
 
-body.tv-mode nav .py-2 {
-    padding-top: 0.75rem !important;
-    padding-bottom: 0.75rem !important;
-}
-
-body.tv-mode nav .px-3 {
-    padding-left: 1.25rem !important;
-    padding-right: 1.25rem !important;
-}
-
-/* --- 5. 搜索框放大 --- */
+/* 搜索框 — 超宽超高 */
+body.tv-mode nav input,
 body.tv-mode input[type="text"],
 body.tv-mode input[type="search"],
 body.tv-mode input:not([type]) {
-    font-size: 1.25rem !important;
-    padding: 0.875rem 1rem !important;
-    min-height: 3.5rem;
+    font-size: 1.4rem !important;
+    padding: 1rem 1.5rem !important;
+    min-height: 4rem !important;
 }
 
-body.tv-mode form button,
-body.tv-mode [role="button"] {
-    min-height: 3rem;
-    min-width: 3rem;
-    font-size: 1rem !important;
+body.tv-mode > div > nav input::placeholder,
+body.tv-mode header nav input::placeholder {
+    font-size: 1.3rem !important;
 }
 
-/* --- 6. Badge 和标签 --- */
-body.tv-mode [class*="badge"],
-body.tv-mode [class*="Badge"],
-body.tv-mode [class*="rounded-full"][class*="px-"] {
-    font-size: 0.875rem !important;
-    padding: 0.375rem 0.75rem !important;
+/* 搜索按钮 */
+body.tv-mode > div > nav form button,
+body.tv-mode > div > nav button[type="submit"],
+body.tv-mode header nav form button,
+body.tv-mode header nav button[type="submit"] {
+    font-size: 1.3rem !important;
+    padding: 0.75rem 2rem !important;
+    min-height: 4rem !important;
 }
 
-/* 内容类型切换按钮 - 不受上面通用规则干扰 */
+/* Footer 内的 nav 保持原始布局 */
+body.tv-mode footer nav,
+body.tv-mode footer nav a,
+body.tv-mode footer nav button {
+    padding: revert !important;
+    min-height: revert !important;
+    min-width: revert !important;
+    font-size: revert !important;
+}
+
+body.tv-mode footer .grid {
+    grid-template-columns: revert !important;
+    gap: revert !important;
+}
+
+body.tv-mode footer .grid > * {
+    min-height: revert !important;
+}
+
+/* --- 5. 内容类型切换胶囊（电影/电视剧/直播/午夜版） --- */
 body.tv-mode .content-type-toggle {
     padding: 0 !important;
-    min-height: auto;
-    min-width: auto;
-    width: 36rem;
+    min-height: auto !important;
+    min-width: auto !important;
+    width: min(48rem, 92vw) !important;
+    height: 4.5rem !important;
+    border-radius: 9999px !important;
+    overflow: hidden !important;
 }
 
 body.tv-mode .content-type-toggle button {
-    padding: 0.75rem 1rem !important;
-    min-height: auto;
-    font-size: 1.1rem !important;
+    padding: 1rem 1.5rem !important;
+    min-height: auto !important;
+    min-width: auto !important;
+    font-size: 1.4rem !important;
+    font-weight: 700;
 }
 
-body.tv-mode .content-type-toggle>div[class*="rounded-full"] {
+/* 滑动指示器 — 防止 TV 模式下的尺寸覆盖导致溢出 */
+body.tv-mode .content-type-toggle > div.absolute {
     padding: 0 !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    border-radius: 9999px !important;
 }
 
-/* --- 7. 卡片信息区域 --- */
-body.tv-mode .p-3 {
-    padding: 1rem !important;
+body.tv-mode .content-type-toggle > div[class*="rounded-full"]:not(button) {
+    padding: 0 !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
 }
 
-body.tv-mode .line-clamp-2 {
-    min-height: 3.5rem;
-}
-
-/* --- 8. 间距放大 --- */
-body.tv-mode .gap-3 {
-    gap: 1.25rem !important;
-}
-
-body.tv-mode .gap-4 {
-    gap: 1.5rem !important;
-}
-
-body.tv-mode .gap-6 {
+/* --- 6. 网格布局 — 4 列大卡片（排除设置页 3 列等小网格） --- */
+body.tv-mode .grid.grid-cols-2,
+body.tv-mode .grid.sm\:grid-cols-3,
+body.tv-mode .grid.md\:grid-cols-4,
+body.tv-mode .grid.lg\:grid-cols-5,
+body.tv-mode .grid.xl\:grid-cols-6 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     gap: 2rem !important;
 }
 
-body.tv-mode .mb-6 {
-    margin-bottom: 2rem !important;
+/* 设置页 3 列保持 3 列 */
+body.tv-mode .grid.grid-cols-3:not(.sm\:grid-cols-3):not(.md\:grid-cols-4) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
 }
 
-body.tv-mode .mb-8 {
-    margin-bottom: 2.5rem !important;
+body.tv-mode .grid[class*="grid-cols"] > * {
+    min-height: 280px;
 }
 
-body.tv-mode .mt-6 {
-    margin-top: 2rem !important;
+/* --- 7. 横向滚动卡片 — 超大海报 --- */
+body.tv-mode .flex.gap-2\.5 > div,
+body.tv-mode .flex.gap-3 > div[class*="shrink-0"] {
+    min-width: 300px !important;
 }
 
-body.tv-mode .py-12 {
-    padding-top: 3.5rem !important;
-    padding-bottom: 3.5rem !important;
+/* 排行幻灯片右侧卡片放大 */
+body.tv-mode .flex.gap-3.overflow-hidden > div,
+body.tv-mode .flex-1.flex.gap-3 > a {
+    min-width: 200px !important;
 }
 
-body.tv-mode .pb-20 {
-    padding-bottom: 5rem !important;
+/* --- 8. 标签按钮 — 大圆角胶囊 --- */
+body.tv-mode [class*="tag"],
+body.tv-mode [class*="Tag"] {
+    font-size: 1.15rem !important;
+    padding: 0.75rem 1.5rem !important;
+    min-height: 3.2rem;
 }
 
-/* --- 9. 焦点指示器（遥控器导航） --- */
-body.tv-mode [data-focusable] {
-    min-height: 3rem;
-    min-width: 3rem;
-    /* 使用 will-change 提示 GPU 预分配合成层，减少焦点切换时的重绘 */
-    will-change: transform;
-    /* 缩短 transition 到 100ms，TV 硬件更流畅 */
-    transition: transform 0.1s ease-out, outline-color 0.1s ease-out;
+body.tv-mode [class*="badge"],
+body.tv-mode [class*="Badge"],
+body.tv-mode [class*="rounded-full"][class*="px-"] {
+    font-size: 1rem !important;
+    padding: 0.5rem 1rem !important;
 }
 
-body.tv-mode [data-focusable]:focus {
-    outline: 3px solid var(--accent-color);
-    outline-offset: 4px;
-    transform: scale(1.03);
-    /* 移除 box-shadow 动画，改用静态 outline，减少 GPU 合成层数 */
+/* --- 9. 卡片信息区域 --- */
+body.tv-mode .p-3 { padding: 1.25rem !important; }
+body.tv-mode .p-4 { padding: 1.5rem !important; }
+body.tv-mode .line-clamp-2 { min-height: 4rem; }
+
+/* --- 10. 间距放大 --- */
+body.tv-mode .gap-3 { gap: 1.5rem !important; }
+body.tv-mode .gap-4 { gap: 2rem !important; }
+body.tv-mode .gap-6 { gap: 2.5rem !important; }
+body.tv-mode .mb-3 { margin-bottom: 1.5rem !important; }
+body.tv-mode .mb-4 { margin-bottom: 2rem !important; }
+body.tv-mode .mb-6 { margin-bottom: 2.5rem !important; }
+body.tv-mode .mb-8 { margin-bottom: 3rem !important; }
+body.tv-mode .mt-6 { margin-top: 2.5rem !important; }
+body.tv-mode .py-12 { padding-top: 4rem !important; padding-bottom: 4rem !important; }
+body.tv-mode .pb-20 { padding-bottom: 6rem !important; }
+
+/* --- 11. 焦点系统 — 绿色发光（核心 TV 体验） --- */
+body.tv-mode [data-focusable],
+body.tv-mode button,
+body.tv-mode a[href],
+body.tv-mode input {
+    will-change: transform, box-shadow;
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                box-shadow 0.15s ease-out !important;
 }
 
-/* --- 10. 侧边栏面板 --- */
+body.tv-mode [data-focusable]:focus,
+body.tv-mode [data-focusable]:focus-visible,
+body.tv-mode button:focus-visible,
+body.tv-mode a:focus-visible,
+body.tv-mode input:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 5px #10b981, 0 0 30px rgba(16, 185, 129, 0.5) !important;
+    transform: scale(1.04) !important;
+    z-index: 10;
+    position: relative;
+}
+
+/* 卡片获焦时更明显 */
+body.tv-mode .grid [data-focusable]:focus,
+body.tv-mode .flex [data-focusable]:focus {
+    box-shadow: 0 0 0 6px #10b981, 0 0 40px rgba(16, 185, 129, 0.6) !important;
+    transform: scale(1.06) !important;
+}
+
+/* --- 12. 侧边栏面板 --- */
 body.tv-mode [class*="fixed"][class*="right-0"],
 body.tv-mode [class*="fixed"][class*="left-0"] {
-    min-width: 400px;
+    min-width: 450px;
 }
 
-/* --- 11. 图标通用放大 --- */
+/* --- 13. 图标通用放大 --- */
 body.tv-mode .lucide,
-body.tv-mode [class*="Icons"] svg {
-    width: 1.5em !important;
-    height: 1.5em !important;
+body.tv-mode svg {
+    min-width: 1.25em;
+    min-height: 1.25em;
 }
 
-/* --- 12. 滚动条 --- */
-body.tv-mode ::-webkit-scrollbar {
-    width: 0;
-    display: none;
+body.tv-mode nav .lucide,
+body.tv-mode nav svg {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
 }
 
-body.tv-mode {
-    scrollbar-width: none;
-}
+/* --- 14. 隐藏滚动条 --- */
+body.tv-mode ::-webkit-scrollbar { width: 0; display: none; }
+body.tv-mode { scrollbar-width: none; }
 
-/* --- 13. 关闭重渲染 CSS 效果，提升 TV 浏览器性能 --- */
+/* --- 15. 性能优化 — 关闭高消耗 CSS 效果 --- */
 body.tv-mode * {
-    /* backdrop-filter 是 TV 浏览器的头号性能杀手 */
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
 }
 
-/* 毛玻璃背景改为不透明，补偿 backdrop-filter 关闭后的视觉缺失 */
-body.tv-mode [class*="glass-bg"] {
-    background: var(--bg-color) !important;
-    opacity: 0.97;
+body.tv-mode [class*="glass-bg"],
+body.tv-mode [class*="glass"] {
+    /* 使用 color-mix 混入 8% 文字色，确保与背景有层次差异 */
+    background: color-mix(in srgb, var(--bg-color), var(--text-color) 8%) !important;
+    opacity: 1;
+    /* 加强边框可见度 */
+    border-color: color-mix(in srgb, var(--glass-border), var(--text-color) 15%) !important;
 }
 
-/* 禁用所有非焦点元素的 transition，减少 GPU 负载 */
-body.tv-mode *:not([data-focusable]) {
-    transition-duration: 0s !important;
+/* 非焦点元素禁用 transition（排除 opacity/visibility 过渡以免影响可见性） */
+body.tv-mode *:not(:focus):not(:focus-visible):not(:focus-within) {
+    transition-duration: 0.05s !important;
 }
 
-/* 禁用 hover 效果（TV 没有鼠标） */
+/* 禁用 hover 效果（TV 无鼠标） */
 body.tv-mode *:hover {
     transform: none !important;
 }
 
-/* --- 14. 登录弹窗 — TV 全屏表单 --- */
-body.tv-mode .hidden.md\:flex {
-    /* 隐藏左侧宣传面板 */
+/* --- 16. 隐藏电视不相关元素 --- */
+/* 下载横幅、APP 推广、底部浮窗 */
+body.tv-mode [href="/download"],
+body.tv-mode [class*="AppDownload"],
+body.tv-mode [class*="download-banner"],
+body.tv-mode .fixed.bottom-4,
+body.tv-mode .fixed.bottom-0,
+body.tv-mode div[style*="position: fixed"][style*="bottom: 0"] {
     display: none !important;
+}
+
+/* 手机端专属元素 */
+body.tv-mode .mobile-only-section {
+    display: none !important;
+}
+
+/* --- 17. 登录弹窗 — TV 全屏化 --- */
+body.tv-mode .hidden.md\:flex {
+    display: none !important;
+}
+
+body.tv-mode div[role="dialog"],
+body.tv-mode [class*="modal"] {
+    border-radius: 2rem !important;
+    padding: 3rem !important;
 }
 
 body.tv-mode input[type="email"],
 body.tv-mode input[type="password"] {
     font-size: 1.5rem !important;
-    padding: 1rem 1.25rem 1rem 3rem !important;
-    min-height: 4rem;
+    padding: 1.25rem 1.5rem 1.25rem 3.5rem !important;
+    min-height: 4.5rem;
+    border-radius: 1rem !important;
 }
 
 body.tv-mode form button[type="submit"] {
-    font-size: 1.25rem !important;
-    padding: 1rem 2rem !important;
-    min-height: 4rem;
+    font-size: 1.4rem !important;
+    padding: 1.25rem 2.5rem !important;
+    min-height: 4.5rem;
+    border-radius: 1rem !important;
 }
 
-/* --- 15. 播放器页面 — TV 适配 --- */
+/* 关闭按钮放大 */
+body.tv-mode button[class*="close"],
+body.tv-mode [aria-label*="close"],
+body.tv-mode [aria-label*="关闭"] {
+    min-width: 4rem !important;
+    min-height: 4rem !important;
+    font-size: 1.5rem !important;
+}
+
+/* --- 18. 播放器页面 — TV 全屏优化 --- */
 body.tv-mode video,
 body.tv-mode [class*="player"] video {
     width: 100% !important;
     max-width: 100% !important;
 }
 
-/* 集数按钮放大 */
+/* 集数按钮 — 超大触摸目标 */
 body.tv-mode [class*="episode"] button,
 body.tv-mode [class*="Episode"] button {
+    min-height: 4rem;
+    min-width: 6rem;
+    font-size: 1.2rem !important;
+    padding: 1rem 2rem !important;
+    margin: 0.25rem !important;
+    border-radius: 0.75rem !important;
+}
+
+/* 选集列表间距 */
+body.tv-mode [class*="episode"],
+body.tv-mode [class*="Episode"] {
+    gap: 0.75rem !important;
+}
+
+/* --- 19. 通用按钮放大 --- */
+body.tv-mode form button,
+body.tv-mode [role="button"] {
     min-height: 3.5rem;
-    font-size: 1.1rem !important;
-    padding: 0.75rem 1.5rem !important;
+    min-width: 3.5rem;
+    font-size: 1.15rem !important;
 }
 
-/* --- 16. 电影海报卡片放大 --- */
-body.tv-mode .grid[class*="grid-cols"] > * {
-    min-height: 200px;
-}
-
-/* --- 17. 标签按钮放大 --- */
-body.tv-mode [class*="tag"],
-body.tv-mode [class*="Tag"] {
-    font-size: 1rem !important;
-    padding: 0.625rem 1.25rem !important;
-    min-height: 2.75rem;
+/* --- 20. 分页按钮 --- */
+body.tv-mode [class*="pagination"] button,
+body.tv-mode [class*="Pagination"] button {
+    min-width: 4rem !important;
+    min-height: 3.5rem !important;
+    font-size: 1.2rem !important;
 }
